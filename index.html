@@ -24,17 +24,25 @@
             display: none;
         }
         #login-button {
-            margin-top: 10px;
-          padding: 10px;
-          background-color: #ff4081;
-          color: white;
+          background-color: #3670e0;
           border: none;
           cursor: pointer;
-          border-radius: 5px;
-          font-size: 14px;
+          border-radius: 10px;
+          font-size: 0.7em;
+          font-weight: bold;
           transition: background-color 0.3s;
-          width: 100%;
+          height: 100%;
+          justify-content: space-between;
+          color: white;
+          align-items: center;
+          padding: 10px 20px;
         }
+        .logo { font-size: 1.5em; font-weight: bold; font-family: 'Lora', serif; font-style: italic;}
+      /* Navbar links */
+      .nav-links {
+      display: flex;
+      gap: 20px;
+      }
         <!-- Navbar CSS -->
       .navbar a { color: white; padding: 14px 20px; text-decoration: none; }
       .navbar a:hover { background-color: #ddd; color: black; }
@@ -77,6 +85,7 @@
         document.getElementById('login-button').addEventListener('click', function() {
             document.getElementById('about-page').style.display = 'none';
             document.getElementById('login-button').style.display = 'none';
+            document.getElementById('navbar').style.display = 'none';
             document.getElementById('iframe-container').style.display = 'block';
             
             // Create and load the iframe
