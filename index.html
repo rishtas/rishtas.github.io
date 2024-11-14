@@ -7,35 +7,61 @@
      crossorigin="anonymous"></script>
     <title>Rishtas</title>
     <!-- Link to Favicon -->
-<link rel="icon" href="YOUR_LOGO_IMAGE_URL" type="image/png"> <!-- or .ico/.svg -->
+    <link rel="icon" href="YOUR_LOGO_IMAGE_URL" type="image/png"> <!-- or .ico/.svg -->
     <style>
-        /* Set iframe to occupy full viewport height */
         html, body {
             margin: 0;
             padding: 0;
             height: 100%;
-            overflow: hidden; /* Prevents page scroll */
+            overflow: hidden;
         }
-        iframe {
+        #iframe-container, #about-page {
             width: 100%;
-            height: 100vh; /* 100% of the viewport height */
+            height: 100vh;
             border: none;
+        }
+        #iframe-container {
+            display: none;
+        }
+        #login-button {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            z-index: 1000;
         }
     </style>
 </head>
 <body>
-    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2498722589128037"
-     crossorigin="anonymous"></script>
-    <iframe src="https://script.google.com/macros/s/AKfycbxCeTd2EQX-U7UJhQ2Z7hYDmC0fZJDnvi-joGQEsild5M0kXMgTZAszz12KsqEcruAc/exec"></iframe>
+    <button id="login-button">Login</button>
+    
+    <div id="about-page">
+        <h1>Welcome to Rishtas.in</h1>
+        <p>This is the about page content for Rishtas.in. Add your information here.</p>
+        <!-- Add more content about Rishtas.in here -->
+    </div>
+
+    <div id="iframe-container"></div>
 
     <script>
-        // Adjust iframe height on window resize for better responsiveness
+        document.getElementById('login-button').addEventListener('click', function() {
+            document.getElementById('about-page').style.display = 'none';
+            document.getElementById('iframe-container').style.display = 'block';
+            
+            // Create and load the iframe
+            const iframe = document.createElement('iframe');
+            iframe.src = "https://script.google.com/macros/s/AKfycbxCeTd2EQX-U7UJhQ2Z7hYDmC0fZJDnvi-joGQEsild5M0kXMgTZAszz12KsqEcruAc/exec";
+            iframe.style.width = '100%';
+            iframe.style.height = '100%';
+            iframe.style.border = 'none';
+            document.getElementById('iframe-container').appendChild(iframe);
+        });
+
         function adjustIframeHeight() {
-            const iframe = document.querySelector('iframe');
-            iframe.style.height = window.innerHeight + 'px';
+            const container = document.getElementById('iframe-container');
+            container.style.height = window.innerHeight + 'px';
         }
         window.addEventListener('resize', adjustIframeHeight);
-        adjustIframeHeight(); // Initial adjustment
+        adjustIframeHeight();
     </script>
 </body>
 </html>
