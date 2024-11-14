@@ -61,6 +61,23 @@
             padding: 0;
             overflow-x: hidden;
         }
+        .loader {
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid #3498db;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            margin-top: -25px;
+            margin-left: -25px;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
     </style>
 </head>
 <body>
@@ -75,7 +92,7 @@
         <!-- Add more content about Rishtas.in here -->
     </div>
 
-    <div id="iframe-container"></div>
+    <div id="iframe-container"><div class="loader"></div></div>
 
     <script>
 
@@ -151,6 +168,10 @@
                     iframe.style.height = '100%';
                     iframe.style.border = 'none';
                     document.getElementById('iframe-container').appendChild(iframe);
+                    iframe.onload = function() {
+                        iframe.style.display = 'block';
+                        document.querySelector('.loader').style.display = 'none';
+                    };
                 }
             });
 
