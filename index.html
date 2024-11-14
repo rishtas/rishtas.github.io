@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2498722589128037"
      crossorigin="anonymous"></script>
     <title>Rishtas</title>
@@ -32,7 +33,8 @@
             transition: background-color 0.3s;
             color: white;
             padding: 0 20px;
-            height: 100%;
+            height: 40px;
+            border-radius: 20px;
         }
         #login-button:hover {
             background-color: #2a5bb9;
@@ -64,7 +66,7 @@
 <body>
     <nav class="navbar">
         <div class="logo">rishtas.in <i class="fa-solid fa-hand-holding-heart" style="color: #feffff;"></i></div>
-        <button id="login-button">Login/Register</button>
+        <button id="login-button">Login / Register</button>
     </nav>
     
     <div id="about-page">
@@ -76,6 +78,65 @@
     <div id="iframe-container"></div>
 
     <script>
+
+              function getSession() {
+      const sessionToken = sessionStorage.getItem('sessionToken');
+      if (sessionToken) {
+      console.log('Existing session token:', sessionToken);
+      return sessionToken;
+      } else {
+      console.log('No session token found.');
+      return null;}}
+      
+      // Function to retrieve the session rid from sessionStorage
+    function getSessionRid() {
+      const sessionToken = sessionStorage.getItem('sessionRid');
+      if (sessionToken) {
+      console.log('Existing session Rid:', sessionToken);
+      return sessionToken;
+      } else {
+      console.log('No session Rid found.');
+      return null; }}
+
+    function getSessionEmail() {
+      const sessionEmail = sessionStorage.getItem('sessionEmail');
+      if (sessionEmail) {
+      console.log('Existing session Email:', sessionEmail);
+      return sessionEmail;
+      } else {
+      console.log('No session token found.');
+      return null;}}    
+
+              window.onload = function() {
+      document.getElementById('loader').style.display = 'block';
+       const sessionToken = getSession();
+       const sessionEmail = getSessionEmail();
+        if (sessionToken) {
+      console.log('Session Token found');
+      if (sessionEmail){
+          document.getElementById('about-page').style.display = 'none';
+            document.querySelector('.navbar').style.display = 'none';
+            document.getElementById('iframe-container').style.display = 'block';
+                     if (!document.querySelector('#iframe-container iframe')) {
+                    const iframe = document.createElement('iframe');
+                    iframe.src = "https://script.google.com/macros/s/AKfycbxCeTd2EQX-U7UJhQ2Z7hYDmC0fZJDnvi-joGQEsild5M0kXMgTZAszz12KsqEcruAc/exec";
+                    iframe.style.width = '100%';
+                    iframe.style.height = '100%';
+                    iframe.style.border = 'none';
+                    document.getElementById('iframe-container').appendChild(iframe);
+                }
+            
+      }
+      // Proceed with authenticated actions
+      } 
+      else {
+      console.log('User is not logged in.');
+          document.getElementById('about-page').style.display = 'block';
+                document.querySelector('.navbar').style.display = 'block';
+                document.getElementById('iframe-container').style.display = 'none';
+          }
+      }
+        
         document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('login-button').addEventListener('click', function() {
                 document.getElementById('about-page').style.display = 'none';
