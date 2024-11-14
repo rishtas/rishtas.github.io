@@ -17,61 +17,55 @@
         }
         #iframe-container, #about-page {
             width: 100%;
-            height: 100vh;
+            height: calc(100vh - 60px); /* Subtract navbar height */
             border: none;
         }
         #iframe-container {
             display: none;
         }
         #login-button {
-          background-color: #3670e0;
-          border: none;
-          cursor: pointer;
-          border-radius: 10px;
-          font-size: 0.7em;
-          font-weight: bold;
-          transition: background-color 0.3s;
-          height: 100%;
-          justify-content: space-between;
-          color: white;
-          align-items: center;
-          padding: 10px 20px;
+            background-color: #3670e0;
+            border: none;
+            cursor: pointer;
+            font-size: 0.9em;
+            font-weight: bold;
+            transition: background-color 0.3s;
+            color: white;
+            padding: 0 20px;
+            height: 100%;
         }
-        .logo { font-size: 1.5em; font-weight: bold; font-family: 'Lora', serif; font-style: italic;}
-      /* Navbar links */
-      .nav-links {
-      display: flex;
-      gap: 20px;
-      }
-        <!-- Navbar CSS -->
-      .navbar a { color: white; padding: 14px 20px; text-decoration: none; }
-      .navbar a:hover { background-color: #ddd; color: black; }
-      .navbar {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 10px 20px;
-      background-color: #5a92ff;
-      color: white;
-      }
-      .button:hover {
-      background-color: #e91e63;
-      }
-      body {
-      font-family: Helvetica, sans-serif;
-      background-color: #f4f4f4;
-      margin: 0;
-      padding: 0;
-      overflow-x: hidden; /* Prevent horizontal scroll */
-      }
+        #login-button:hover {
+            background-color: #2a5bb9;
+        }
+        .logo { 
+            font-size: 1.5em; 
+            font-weight: bold; 
+            font-family: 'Lora', serif; 
+            font-style: italic;
+        }
+        .navbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 20px;
+            background-color: #5a92ff;
+            color: white;
+            height: 60px; /* Fixed height for navbar */
+        }
+        body {
+            font-family: Helvetica, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+            overflow-x: hidden;
+        }
     </style>
 </head>
 <body>
-      <nav class="navbar" id="navbar" >
-        <div class="logo">rishtas.in <i class="fa-solid fa-hand-holding-heart" style="color: #feffff;"></i> <button id="login-button">Login/Register</button></div>
-      </nav>
-    
-   
+    <nav class="navbar">
+        <div class="logo">rishtas.in <i class="fa-solid fa-hand-holding-heart" style="color: #feffff;"></i></div>
+        <button id="login-button">Login/Register</button>
+    </nav>
     
     <div id="about-page">
         <h1>Welcome to Rishtas.in</h1>
@@ -82,27 +76,30 @@
     <div id="iframe-container"></div>
 
     <script>
-        document.getElementById('login-button').addEventListener('click', function() {
-            document.getElementById('about-page').style.display = 'none';
-            document.getElementById('login-button').style.display = 'none';
-            document.getElementById('navbar').style.display = 'none';
-            document.getElementById('iframe-container').style.display = 'block';
-            
-            // Create and load the iframe
-            const iframe = document.createElement('iframe');
-            iframe.src = "https://script.google.com/macros/s/AKfycbxCeTd2EQX-U7UJhQ2Z7hYDmC0fZJDnvi-joGQEsild5M0kXMgTZAszz12KsqEcruAc/exec";
-            iframe.style.width = '100%';
-            iframe.style.height = '100%';
-            iframe.style.border = 'none';
-            document.getElementById('iframe-container').appendChild(iframe);
-        });
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('login-button').addEventListener('click', function() {
+                document.getElementById('about-page').style.display = 'none';
+                document.querySelector('.navbar').style.display = 'none';
+                document.getElementById('iframe-container').style.display = 'block';
+                
+                // Create and load the iframe
+                if (!document.querySelector('#iframe-container iframe')) {
+                    const iframe = document.createElement('iframe');
+                    iframe.src = "https://script.google.com/macros/s/AKfycbxCeTd2EQX-U7UJhQ2Z7hYDmC0fZJDnvi-joGQEsild5M0kXMgTZAszz12KsqEcruAc/exec";
+                    iframe.style.width = '100%';
+                    iframe.style.height = '100%';
+                    iframe.style.border = 'none';
+                    document.getElementById('iframe-container').appendChild(iframe);
+                }
+            });
 
-        function adjustIframeHeight() {
-            const container = document.getElementById('iframe-container');
-            container.style.height = window.innerHeight + 'px';
-        }
-        window.addEventListener('resize', adjustIframeHeight);
-        adjustIframeHeight();
+            function adjustIframeHeight() {
+                const container = document.getElementById('iframe-container');
+                container.style.height = window.innerHeight + 'px';
+            }
+            window.addEventListener('resize', adjustIframeHeight);
+            adjustIframeHeight();
+        });
     </script>
 </body>
 </html>
