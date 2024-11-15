@@ -125,7 +125,7 @@
       return null;}}    
 
               window.onload = function() {
-      document.getElementById('loader').style.display = 'block';
+      document.querySelector('.loader').style.display = 'block';
        const sessionToken = getSession();
        const sessionEmail = getSessionEmail();
         if (sessionToken) {
