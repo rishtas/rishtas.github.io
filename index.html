@@ -9,18 +9,13 @@
     <title>Rishtas</title>
     <link rel="icon" href="YOUR_LOGO_IMAGE_URL" type="image/png">
     <style>
-        html {
-            font-size: 16px;
-        }
-        body {
+        html, body {
             margin: 0;
             padding: 0;
             height: 100%;
             overflow: hidden;
             font-family: Helvetica, sans-serif;
             background-color: #f4f4f4;
-            font-size: 1rem;
-            line-height: 1.5;
         }
         #content-container {
             height: 100vh;
@@ -44,7 +39,7 @@
             height: 60px;
         }
         .logo { 
-            font-size: 1.5rem; 
+            font-size: 1.5em; 
             font-weight: bold; 
             font-family: 'Lora', serif; 
             font-style: italic;
@@ -54,7 +49,7 @@
             border: none;
             border-radius: 20px;
             cursor: pointer;
-            font-size: 1rem;
+            font-size: 0.9em;
             font-weight: bold;
             transition: background-color 0.3s;
             color: white;
@@ -86,8 +81,7 @@
         #home-button {
             position: fixed;
             bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
+            right: 20px;
             background-color: #3670e0;
             color: white;
             border: none;
@@ -102,30 +96,6 @@
         }
         #home-button:hover {
             background-color: #2a5bb9;
-        }
-        #about-page {
-            padding: 20px;
-        }
-        #about-page h1 {
-            font-size: 2rem;
-            margin-bottom: 1rem;
-        }
-        #about-page p {
-            font-size: 1rem;
-            margin-bottom: 1rem;
-        }
-        @media (max-width: 768px) {
-            html {
-                font-size: 14px;
-            }
-            .navbar {
-                padding: 0 10px;
-            }
-            #login-button {
-                font-size: 0.9rem;
-                padding: 0 15px;
-                min-width: 100px;
-            }
         }
     </style>
 </head>
@@ -148,7 +118,6 @@
     </div>
 
     <button id="home-button"><i class="fa-solid fa-house"></i></button>
-
 
     <script>
         function getSession() {
