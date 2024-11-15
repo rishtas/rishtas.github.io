@@ -1,52 +1,33 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-        <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2498722589128037"
-      crossorigin="anonymous"></script>
-
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2498722589128037"
+     crossorigin="anonymous"></script>
     <title>Rishtas</title>
-    <!-- Link to Favicon -->
-    <link rel="icon" href="YOUR_LOGO_IMAGE_URL" type="image/png"> <!-- or .ico/.svg -->
+    <link rel="icon" href="YOUR_LOGO_IMAGE_URL" type="image/png">
     <style>
         html, body {
             margin: 0;
             padding: 0;
             height: 100%;
             overflow: hidden;
+            font-family: Helvetica, sans-serif;
+            background-color: #f4f4f4;
+        }
+        #content-container {
+            height: 100vh;
+            overflow-y: auto;
         }
         #iframe-container, #about-page {
             width: 100%;
-            height: calc(100vh - 60px); /* Subtract navbar height */
+            height: 100%;
             border: none;
         }
         #iframe-container {
             display: none;
-            position: relative;
-        }
-        #login-button {
-            background-color: #3670e0;
-            border: none;
-            border-radius: 20px; 
-            cursor: pointer;
-            font-size: 0.9em;
-            font-weight: bold;
-            transition: background-color 0.3s;
-            color: white;
-            padding: 0 20px;
-            height: 40px;
-        }
-        #login-button:hover {
-            background-color: #2a5bb9;
-        }
-        .logo { 
-            font-size: 1.5em; 
-            font-weight: bold; 
-            font-family: 'Lora', serif; 
-            font-style: italic;
         }
         .navbar {
             display: flex;
@@ -55,7 +36,30 @@
             padding: 0 20px;
             background-color: #5a92ff;
             color: white;
-            height: 60px; /* Fixed height for navbar */
+            height: 60px;
+        }
+        .logo { 
+            font-size: 1.5em; 
+            font-weight: bold; 
+            font-family: 'Lora', serif; 
+            font-style: italic;
+        }
+        #login-button {
+            background-color: #3670e0;
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 0.9em;
+            font-weight: bold;
+            transition: background-color 0.3s;
+            color: white;
+            padding: 0 20px;
+            height: 40px;
+            white-space: nowrap;
+            min-width: 120px;
+        }
+        #login-button:hover {
+            background-color: #2a5bb9;
         }
         .loader {
             border: 5px solid #f3f3f3;
@@ -74,90 +78,111 @@
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
+        #home-button {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background-color: #3670e0;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            font-size: 24px;
+            cursor: pointer;
+            display: none;
+            z-index: 1000;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+        }
+        #home-button:hover {
+            background-color: #2a5bb9;
+        }
     </style>
 </head>
 <body>
-    <nav class="navbar">
-        <div class="logo">rishtas.in <i class="fa-solid fa-hand-holding-heart" style="color: #feffff;"></i></div>
-        <button id="login-button">Login/Register</button>
-    </nav>
-    
-    <div id="about-page">
-        <h1>Welcome to Rishtas.in</h1>
-        <p>This is the about page content for Rishtas.in. Add your information here.</p>
-        <!-- Add more content about Rishtas.in here -->
+    <div id="content-container">
+        <nav class="navbar">
+            <div class="logo">rishtas.in <i class="fa-solid fa-hand-holding-heart" style="color: #feffff;"></i></div>
+            <button id="login-button">Login / Register</button>
+        </nav>
+        
+        <div id="about-page">
+            <h1>Welcome to Rishtas.in</h1>
+            <p>This is the about page content for Rishtas.in. Add your information here.</p>
+            <!-- Add more content about Rishtas.in here -->
+        </div>
+
+        <div id="iframe-container">
+            <div class="loader"></div>
+        </div>
     </div>
 
-    <div id="iframe-container">
-        <div class="loader"></div>
-    </div>
+    <button id="home-button"><i class="fas fa-home"></i></button>
 
     <script>
-         function getSession() {
-      const sessionToken = sessionStorage.getItem('sessionLogin');
-      if (sessionToken) {
-      console.log('User clicked login');
-      return sessionToken;
-      } else {
-      console.log('No session token found.');
-      return null;}}
+        function getSession() {
+            const sessionToken = sessionStorage.getItem('sessionLogin');
+            if (sessionToken) {
+                console.log('User clicked login');
+                return sessionToken;
+            } else {
+                console.log('No session token found.');
+                return null;
+            }
+        }
 
-              function setSession() {
-                 const loginClick=true;
-      sessionStorage.setItem('sessionLogin', loginClick);
-      console.log('Login Click', loginClick);
-      }
-      
+        function setSession() {
+            const loginClick = true;
+            sessionStorage.setItem('sessionLogin', loginClick);
+            console.log('Login Click', loginClick);
+        }
 
-              window.onload = function() {
-                  document.querySelector('.loader').style.display = 'block';
-       const sessionToken = getSession();
-      if (sessionToken){
-          document.getElementById('about-page').style.display = 'none';
-            document.querySelector('.navbar').style.display = 'none';
+        function showIframe() {
+            document.getElementById('about-page').style.display = 'none';
             document.getElementById('iframe-container').style.display = 'block';
-                     if (!document.querySelector('#iframe-container iframe')) {
-                    const iframe = document.createElement('iframe');
-                    iframe.src = "https://script.google.com/macros/s/AKfycbxCeTd2EQX-U7UJhQ2Z7hYDmC0fZJDnvi-joGQEsild5M0kXMgTZAszz12KsqEcruAc/exec";
-                    iframe.style.width = '100%';
-                    iframe.style.height = '100%';
-                    iframe.style.border = 'none';
-                    document.getElementById('iframe-container').appendChild(iframe);
-                                             iframe.onload = function() {
-                        iframe.style.display = 'block';
-                        document.querySelector('.loader').style.display = 'none';
-                    };
-                }
+            document.querySelector('.navbar').style.display = 'none';
+            document.getElementById('home-button').style.display = 'block';
             
-      } 
-      else {
-      console.log('User is not logged in.');
-          document.getElementById('about-page').style.display = 'block';
-                document.querySelector('.navbar').style.display = 'block';
-                document.getElementById('iframe-container').style.display = 'none';
-          }
-      }
+            if (!document.querySelector('#iframe-container iframe')) {
+                const iframe = document.createElement('iframe');
+                iframe.src = "https://script.google.com/macros/s/AKfycbxCeTd2EQX-U7UJhQ2Z7hYDmC0fZJDnvi-joGQEsild5M0kXMgTZAszz12KsqEcruAc/exec";
+                iframe.style.width = '100%';
+                iframe.style.height = '100%';
+                iframe.style.border = 'none';
+                document.getElementById('iframe-container').appendChild(iframe);
+                iframe.onload = function() {
+                    iframe.style.display = 'block';
+                    document.querySelector('.loader').style.display = 'none';
+                };
+            }
+        }
+
+        function showAboutPage() {
+            document.getElementById('about-page').style.display = 'block';
+            document.getElementById('iframe-container').style.display = 'none';
+            document.querySelector('.navbar').style.display = 'flex';
+            document.getElementById('home-button').style.display = 'none';
+            sessionStorage.removeItem('sessionLogin');
+        }
+
+        window.onload = function() {
+            document.querySelector('.loader').style.display = 'block';
+            const sessionToken = getSession();
+            if (sessionToken) {
+                showIframe();
+            } else {
+                showAboutPage();
+            }
+        }
         
         document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('login-button').addEventListener('click', function() {
-                document.getElementById('about-page').style.display = 'none';
-                document.querySelector('.navbar').style.display = 'none';
-                document.getElementById('iframe-container').style.display = 'block';
+                showIframe();
                 setSession();
-                
-                // Create and load the iframe
-                if (!document.querySelector('#iframe-container iframe')) {
-                    const iframe = document.createElement('iframe');
-                    iframe.src = "https://script.google.com/macros/s/AKfycbxCeTd2EQX-U7UJhQ2Z7hYDmC0fZJDnvi-joGQEsild5M0kXMgTZAszz12KsqEcruAc/exec";
-                    iframe.style.width = '100%';
-                    iframe.style.height = '100%';
-                    iframe.style.border = 'none';
-                    document.getElementById('iframe-container').appendChild(iframe);
-                    iframe.onload = function() {
-                        iframe.style.display = 'block';
-                        document.querySelector('.loader').style.display = 'none';
-                    };
-                }
+            });
+
+            document.getElementById('home-button').addEventListener('click', function() {
+                showAboutPage();
             });
 
             function adjustIframeHeight() {
@@ -166,7 +191,7 @@
             }
             window.addEventListener('resize', adjustIframeHeight);
             adjustIframeHeight();
-                    });
+        });
     </script>
 </body>
 </html>
