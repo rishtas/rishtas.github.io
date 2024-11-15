@@ -97,39 +97,21 @@
     <script>
 
               function getSession() {
-      const sessionToken = sessionStorage.getItem('sessionToken');
+      const sessionToken = sessionStorage.getItem('sessionLogin');
       if (sessionToken) {
-      console.log('Existing session token:', sessionToken);
       return sessionToken;
       } else {
       console.log('No session token found.');
       return null;}}
-      
-      // Function to retrieve the session rid from sessionStorage
-    function getSessionRid() {
-      const sessionToken = sessionStorage.getItem('sessionRid');
-      if (sessionToken) {
-      console.log('Existing session Rid:', sessionToken);
-      return sessionToken;
-      } else {
-      console.log('No session Rid found.');
-      return null; }}
 
-    function getSessionEmail() {
-      const sessionEmail = sessionStorage.getItem('sessionEmail');
-      if (sessionEmail) {
-      console.log('Existing session Email:', sessionEmail);
-      return sessionEmail;
-      } else {
-      console.log('No session token found.');
-      return null;}}    
+    function setSession() {
+      sessionStorage.setItem('sessionLogin', "clicked");
+      }
 
               window.onload = function() {
        const sessionToken = getSession();
-       const sessionEmail = getSessionEmail();
         if (sessionToken) {
-      console.log('Session Token found');
-      if (sessionEmail){
+      console.log('Loading App');
           document.getElementById('about-page').style.display = 'none';
             document.querySelector('.navbar').style.display = 'none';
             document.getElementById('iframe-container').style.display = 'block';
@@ -140,10 +122,8 @@
                     iframe.style.height = '100%';
                     iframe.style.border = 'none';
                     document.getElementById('iframe-container').appendChild(iframe);
+                    setSession();
                 }
-            
-      }
-      // Proceed with authenticated actions
       } 
       else {
       console.log('User is not logged in.');
