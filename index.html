@@ -115,6 +115,7 @@ html
       
 
               window.onload = function() {
+                  document.querySelector('.loader').style.display = 'block';
       document.getElementById('loader').style.display = 'block';
        const sessionToken = getSession();
       if (sessionToken){
@@ -128,6 +129,10 @@ html
                     iframe.style.height = '100%';
                     iframe.style.border = 'none';
                     document.getElementById('iframe-container').appendChild(iframe);
+                                             iframe.onload = function() {
+                        iframe.style.display = 'block';
+                        document.querySelector('.loader').style.display = 'none';
+                    };
                 }
             
       } 
