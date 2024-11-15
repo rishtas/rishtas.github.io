@@ -98,10 +98,34 @@
             display: none;
             z-index: 1000;
             box-shadow: 0 2px 5px rgba(0,0,0,0.3);
-            align-items: center;
+            text-align: center;
         }
         #home-button:hover {
             background-color: #2a5bb9;
+        }
+        #about-page {
+            padding: 20px;
+        }
+        #about-page h1 {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+        }
+        #about-page p {
+            font-size: 1rem;
+            margin-bottom: 1rem;
+        }
+        @media (max-width: 768px) {
+            html {
+                font-size: 14px;
+            }
+            .navbar {
+                padding: 0 10px;
+            }
+            #login-button {
+                font-size: 0.9rem;
+                padding: 0 15px;
+                min-width: 100px;
+            }
         }
     </style>
 </head>
