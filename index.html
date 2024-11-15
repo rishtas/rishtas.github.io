@@ -35,7 +35,7 @@ html
             transition: background-color 0.3s;
             color: white;
             padding: 0 20px;
-            height: 30px;
+            height: 40px;
         }
         #login-button:hover {
             background-color: #2a5bb9;
@@ -98,11 +98,53 @@ html
     </div>
 
     <script>
+         function getSession() {
+      const sessionToken = sessionStorage.getItem('sessionLogin');
+      if (sessionToken) {
+      console.log('User clicked login');
+      return sessionToken;
+      } else {
+      console.log('No session token found.');
+      return null;}}
+
+              function setSession() {
+                 const loginClick=true;
+      sessionStorage.setItem('sessionLogin', loginClick);
+      console.log('Login Click', loginClick);
+      }
+      
+
+              window.onload = function() {
+      document.getElementById('loader').style.display = 'block';
+       const sessionToken = getSession();
+      if (sessionToken){
+          document.getElementById('about-page').style.display = 'none';
+            document.querySelector('.navbar').style.display = 'none';
+            document.getElementById('iframe-container').style.display = 'block';
+                     if (!document.querySelector('#iframe-container iframe')) {
+                    const iframe = document.createElement('iframe');
+                    iframe.src = "https://script.google.com/macros/s/AKfycbxCeTd2EQX-U7UJhQ2Z7hYDmC0fZJDnvi-joGQEsild5M0kXMgTZAszz12KsqEcruAc/exec";
+                    iframe.style.width = '100%';
+                    iframe.style.height = '100%';
+                    iframe.style.border = 'none';
+                    document.getElementById('iframe-container').appendChild(iframe);
+                }
+            
+      } 
+      else {
+      console.log('User is not logged in.');
+          document.getElementById('about-page').style.display = 'block';
+                document.querySelector('.navbar').style.display = 'block';
+                document.getElementById('iframe-container').style.display = 'none';
+          }
+      }
+        
         document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('login-button').addEventListener('click', function() {
                 document.getElementById('about-page').style.display = 'none';
                 document.querySelector('.navbar').style.display = 'none';
                 document.getElementById('iframe-container').style.display = 'block';
+                setSession();
                 
                 // Create and load the iframe
                 if (!document.querySelector('#iframe-container iframe')) {
@@ -111,10 +153,7 @@ html
                     iframe.style.width = '100%';
                     iframe.style.height = '100%';
                     iframe.style.border = 'none';
-                    iframe.style.display = 'none'; // Hide iframe initially
                     document.getElementById('iframe-container').appendChild(iframe);
-
-                    // Show iframe and hide loader when iframe is loaded
                     iframe.onload = function() {
                         iframe.style.display = 'block';
                         document.querySelector('.loader').style.display = 'none';
@@ -128,7 +167,7 @@ html
             }
             window.addEventListener('resize', adjustIframeHeight);
             adjustIframeHeight();
-        });
+                    });
     </script>
 </body>
 </html>
