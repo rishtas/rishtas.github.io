@@ -1,6 +1,4 @@
-Certainly! Adding a loading indicator while the iframe loads is a great way to improve user experience. Here's an updated version of your code that includes a loading spinner:
-
-```html
+html
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -134,20 +132,3 @@ Certainly! Adding a loading indicator while the iframe loads is a great way to i
     </script>
 </body>
 </html>
-```
-
-Here are the key changes:
-
-1. Added a CSS rule for the loader (spinning circle).
-2. Added a `<div class="loader"></div>` inside the iframe container.
-3. Modified the JavaScript to:
-   - Initially hide the iframe.
-   - Show the loader while the iframe is loading.
-   - Hide the loader and show the iframe once it's fully loaded.
-
-Now, when a user clicks the login button:
-1. The about page and navbar will disappear.
-2. The iframe container will become visible, showing the loading spinner.
-3. Once the iframe content is fully loaded, the spinner will disappear, and the iframe content will be displayed.
-
-This provides a smoother user experience, especially if the iframe content takes a while to load.
