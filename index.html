@@ -322,11 +322,11 @@
             <div class="features">
                 <div class="feature-card">
                     <i class="fas fa-coins"></i>
-                    <h3>100% Free, No Hidden Costs</h3>
+                    <h3>100% Free!</h3>
                     <p>Our platform is completely free, making matchmaking accessible to everyone.</p>
                 </div>
                 <div class="feature-card">
-                    <i class="fas fa-coins"></i>
+                    <i class="fa-regular fa-handshake"></i>
                     <h3>Noble Purpose</h3>
                     <p>A initiative dedicated to helping people find their life partners without</p>
                 </div>
@@ -341,12 +341,12 @@
                     <p>Connect with potential matches locally or from around the world. Find your perfect match from diverse global community.</p>
                 </div>
                 <div class="feature-card">
-                    <i class="fas fa-user-check"></i>
-                    <h3>Personalized</h3>
-                    <p>Experience tailored matchmaking based on your unique preferences.</p>
+                    <i class="fa-solid fa-person-shelter"></i>
+                    <h3>Smart Preferences</h3>
+                    <p>Create your own wishlist and filter matches based on your interests, making it easier to find compatible life partners.</p>
                 </div>
                  <div class="feature-card">
-                    <i class="fas fa-user-check"></i>
+                    <i class="fa-solid fa-link"></i>
                     <h3>Direct Connection</h3>
                     <p>Connect directly with potential matches without any middlemen or agents..</p>
                 </div>
@@ -355,7 +355,7 @@
 
         <section class="cta">
             <h2>Join this noble platform, and find perfect match on Rishtas.in</h2>
-            <a href="#" id="login-button">Get Started Now!</a>
+            <a href="#" id="cta-button">Get Started Now!</a>
         </section>
 
         <section class="testimonials">
@@ -453,6 +453,10 @@
         
         document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('login-button').addEventListener('click', function() {
+                showIframe();
+                setSession();
+            });
+            document.getElementById('cta-button').addEventListener('click', function() {
                 showIframe();
                 setSession();
             });
