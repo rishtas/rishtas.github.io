@@ -337,6 +337,55 @@
                 font-size: 2rem;
             }
         }
+
+        .popup {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0,0,0,0.5);
+    z-index: 1000;
+}
+
+.popup-content {
+    background-color: white;
+    border: 2px solid #0066cc;
+    border-radius: 20px;
+    padding: 20px;
+    width: 80%;
+    max-width: 500px;
+    position: relative;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+.close {
+      position: absolute;
+      top: 10px;
+      right: 15px;
+      font-size: 20px;
+      cursor: pointer;
+      }
+
+form input, form textarea {
+    width: 80%;
+    padding: 8px;
+    margin: 10px 0;
+    border: 1px solid #0066cc;
+    border-radius: 5px;
+}
+
+form button {
+    background-color: #0066cc;
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
     </style>
 </head>
 <body>
@@ -436,6 +485,34 @@
     <button id="donate-button"><i class="fa-regular fa-handshake"></i> Donate Us</button>
     <button id="ad-button"><i class="fa-brands fa-adversal"></i> Advertise your product/brand here</button>
 
+    <!-- Add these forms to your HTML (initially hidden) -->
+<div id="donate-popup" class="popup">
+    <div class="popup-content">
+        <span class="close">&times;</span>
+        <h2>Donate Us</h2>
+        <form id="donate-form">
+            <input type="text" id="donor-name" placeholder="Your Name" required>
+            <input type="number" id="donate-amount" placeholder="Amount (₹)" required>
+            <button type="submit">Proceed to Pay</button>
+        </form>
+    </div>
+</div>
+
+<div id="advertise-popup" class="popup">
+    <div class="popup-content">
+        <span class="close">&times;</span>
+        <h2>Advertise with Us</h2>
+        <form id="advertise-form">
+            <input type="text" id="product-name" placeholder="Product/Brand Name" required>
+            <input type="tel" id="phone" placeholder="Phone Number" required>
+            <input type="email" id="email" placeholder="Email Address" required>
+            <input type="url" id="website" placeholder="Website Link">
+            <textarea id="description" placeholder="Brief description of your product" required></textarea>
+            <button type="submit">Submit</button>
+        </form>
+    </div>
+</div>
+
     <script>
         function getSession() {
             const sessionToken = sessionStorage.getItem('sessionLogin');
@@ -517,6 +594,56 @@
             window.addEventListener('resize', adjustIframeHeight);
             adjustIframeHeight();
         });
+
+        document.addEventListener('DOMContentLoaded', function() {
+    const donateBtn = document.getElementById('donate-button');
+    const adBtn = document.getElementById('ad-button');
+    const donatePopup = document.getElementById('donate-popup');
+    const adPopup = document.getElementById('advertise-popup');
+    const closeBtns = document.getElementsByClassName('close');
+
+    // Donate button click handler
+    donateBtn.addEventListener('click', () => {
+        donatePopup.style.display = 'block';
+    });
+
+    // Advertise button click handler
+    adBtn.addEventListener('click', () => {
+        adPopup.style.display = 'block';
+    });
+
+    // Close buttons
+    Array.from(closeBtns).forEach(btn => {
+        btn.addEventListener('click', function() {
+            donatePopup.style.display = 'none';
+            adPopup.style.display = 'none';
+        });
+    });
+
+    // Donate form submission
+    document.getElementById('donate-form').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const amount = document.getElementById('donate-amount').value;
+        const name = document.getElementById('donor-name').value;
+        
+        // Replace this URL with actual PhonePe payment URL
+        window.location.href = `phonepe://pay?amount=${amount}&name=${name}`;
+    });
+
+    // Advertise form submission
+    document.getElementById('advertise-form').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const productName = document.getElementById('product-name').value;
+        const phone = document.getElementById('phone').value;
+        const email = document.getElementById('email').value;
+        const website = document.getElementById('website').value;
+        const description = document.getElementById('description').value;
+
+        const mailtoLink = `mailto:info.rishtas@gmail.com?subject=Advertisement Request for ${productName}&body=Product Name: ${productName}%0D%0APhone: ${phone}%0D%0AEmail: ${email}%0D%0AWebsite: ${website}%0D%0ADescription: ${description}`;
+        
+        window.location.href = mailtoLink;
+    });
+});
     </script>
 </body>
 </html>
