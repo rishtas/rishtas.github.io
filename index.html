@@ -112,6 +112,26 @@
         #home-button:hover {
             background-color: #2a5bb9;
         }
+        #donate-button:hover {
+            background-color: #2a5bb9;
+        }
+        #donate-button {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            background-color: #3670e0;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            font-size: 14px;
+            cursor: pointer;
+            display: none;
+            z-index: 1000;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+            text-align: center;
+        }
         #about-page {
             
            
@@ -418,6 +438,7 @@
             document.getElementById('iframe-container').style.display = 'block';
             document.querySelector('.navbar').style.display = 'none';
             document.getElementById('home-button').style.display = 'block';
+            document.getElementById('donate-button').style.display = 'none';
             
             if (!document.querySelector('#iframe-container iframe')) {
                 const iframe = document.createElement('iframe');
@@ -438,6 +459,7 @@
             document.getElementById('iframe-container').style.display = 'none';
             document.querySelector('.navbar').style.display = 'flex';
             document.getElementById('home-button').style.display = 'none';
+            document.getElementById('donate-button').style.display = 'block';
             sessionStorage.removeItem('sessionLogin');
         }
 
