@@ -624,13 +624,13 @@ form button {
 
     // Donate form submission
     document.getElementById('donate-form').addEventListener('submit', function(e) {
-        e.preventDefault();
-        const amount = document.getElementById('donate-amount').value;
-        const name = document.getElementById('donor-name').value;
-        
-        // Replace this URL with actual PhonePe payment URL
-        window.location.href = `phonepe://pay?amount=${amount}&name=${name}`;
-    });
+    e.preventDefault();
+    const amount = document.getElementById('donate-amount').value;
+    const name = document.getElementById('donor-name').value;
+    
+    // UPI payment link
+    window.location.href = `upi://pay?pa=shock.hdfc@axl&pn=Rishtas.In&am=${amount}&cu=INR`;
+});
 
     // Advertise form submission
     document.getElementById('advertise-form').addEventListener('submit', function(e) {
