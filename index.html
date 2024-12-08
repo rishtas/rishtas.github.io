@@ -115,6 +115,9 @@
         #donate-button:hover {
             background-color: #2a5bb9;
         }
+         #ad-button:hover {
+            background-color: #2a5bb9;
+        }
         #donate-button {
             position: fixed;
             bottom: 20px;
@@ -123,9 +126,26 @@
             color: white;
             border: none;
             border-radius: 50%;
-            width: 60px;
-            height: 60px;
-            font-size: 14px;
+            width: 2000px;
+            height: 80px;
+            font-size: 16px;
+            cursor: pointer;
+            display: none;
+            z-index: 1000;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+            text-align: center;
+        }
+        #ad-button {
+            position: fixed;
+            bottom: 50px;
+            left: 20px;
+            background-color: #3670e0;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 2000px;
+            height: 80px;
+            font-size: 16px;
             cursor: pointer;
             display: none;
             z-index: 1000;
@@ -414,6 +434,7 @@
 
     <button id="home-button"><i class="fa-solid fa-house"></i></button>
     <button id="donate-button"><i class="fa-regular fa-handshake"></i> Donate Us</button>
+    <button id="ad-button"><i class="fa-brands fa-adversal"></i> Advertise your product/brand here</button>
 
     <script>
         function getSession() {
@@ -439,6 +460,7 @@
             document.querySelector('.navbar').style.display = 'none';
             document.getElementById('home-button').style.display = 'block';
             document.getElementById('donate-button').style.display = 'none';
+             document.getElementById('ad-button').style.display = 'none';
             
             if (!document.querySelector('#iframe-container iframe')) {
                 const iframe = document.createElement('iframe');
@@ -460,6 +482,7 @@
             document.querySelector('.navbar').style.display = 'flex';
             document.getElementById('home-button').style.display = 'none';
             document.getElementById('donate-button').style.display = 'block';
+            document.getElementById('ad-button').style.display = 'block';
             sessionStorage.removeItem('sessionLogin');
         }
 
