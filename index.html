@@ -24,6 +24,7 @@
             line-height: 1.5;
             color: var(--text-color);
             background-color: var(--bg-color);
+            overflow-y: auto;
         }
         #content-container {
             height: 100vh;
@@ -153,6 +154,9 @@
             text-align: center;
         }
         #about-page {
+             height: auto; /* Change from 100% to auto */
+             min-height: 100%;
+             overflow-y: auto;
             
            
         }
@@ -393,15 +397,15 @@ form button {
         width: 100%;
         margin: 0;
         padding: 0;
-        overflow: hidden;
         position: fixed;
+        overflow-y: auto;
     }
 
     #content-container {
         height: 100%;
         width: 100%;
         position: fixed;
-        overflow: hidden;
+        overflow-y: auto;
     }
 
     #iframe-container {
