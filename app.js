@@ -607,9 +607,8 @@ function login() {
   var e = document.getElementById('email').value.trim(), p = document.getElementById('password').value;
   if (!e) { showAlert('Please enter your email.'); return; }
   if (!p) { showAlert('Please enter your password.'); return; }
-  // TODO: Re-enable captcha for production
   var cap = getCaptchaResponse('loginCaptcha') || '';
-  // if (!cap) { showAlert('Please complete the CAPTCHA.'); return; }
+  if (!cap) { showAlert('Please complete the CAPTCHA.'); return; }
   showLoader('Signing in...');
   api.checkLogin(e, p, cap).then(function(r) {
     if (r.success) {
