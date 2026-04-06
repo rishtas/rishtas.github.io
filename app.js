@@ -659,9 +659,9 @@ function registerUser() {
       var link1 = r.url;
       if (!ph2) return finishReg(link1);
       compressImage(ph2, 800, 0.75, function(b642) {
-        api.uploadFile(b642).then(function(r2) { finishReg(link1 + ',' + r2.url); });
+        api.uploadFile(b642).then(function(r2) { finishReg(link1 + ',' + r2.url); }).catch(function(err) { hideLoader2(); showAlert('Photo 2 upload failed: ' + err.message); });
       });
-    });
+    }).catch(function(err) { hideLoader2(); showAlert('Photo upload failed: ' + err.message); });
   });
 
   function finishReg(allLinks) {

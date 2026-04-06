@@ -46,7 +46,22 @@ var api = {
     });
   },
 
-  // ===== PUBLIC (no token needed) =====
+  // POST with actual body (needed for large payloads like file uploads)
+  postDirect: function(action, body) {
+    body = body || {};
+    body.action = action;
+    body.token = getAuthToken();
+    return fetch(API_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify(body),
+      redirect: 'follow'
+    }).then(function(r) { return r.json(); }).then(function(r) {
+      handleAuthError(r);
+      if (!r.ok) throw new Error(r.error || 'API error');
+      return r.data;
+    });
+  },
   checkLogin: function(email, password, captcha) {
     return api.post('checkLogin', { email: email, password: password, captcha: captcha });
   },
@@ -80,7 +95,7 @@ var api = {
     return api.post('updateUserProfile', { profile: profile, captcha: captcha });
   },
   uploadFile: function(base64) {
-    return api.post('uploadFile', { base64: base64 });
+    return api.postDirect('uploadFile', { base64: base64 });
   },
   addToWishlist: function(email, rid) {
     return api.post('addToWishlist', { email: email, rid: rid });
