@@ -8,6 +8,72 @@ var _allProfiles = null, _userProfile = null, _displayPage = 0;
 var DISPLAY_PAGE_SIZE = 20;
 var LS_PREFIX = 'rishtas_';
 
+// ===== DROPDOWN DATA =====
+var _LOCATIONS = ['Bangalore','Mumbai','Delhi','Hyderabad','Chennai','Pune','Kolkata','Ahmedabad','Jaipur','Lucknow','Chandigarh','Bhopal','Indore','Nagpur','Patna','Ranchi','Bhubaneswar','Guwahati','Thiruvananthapuram','Kochi','Coimbatore','Mysore','Mangalore','Hubli-Dharwad','Belgaum','Gulbarga','Shimoga','Davangere','Bellary','Bijapur','Raichur','Udupi','Hassan','Mandya','Tumkur','Visakhapatnam','Vijayawada','Tirupati','Warangal','Guntur','Madurai','Salem','Tiruchirappalli','Erode','Vellore','Thrissur','Kozhikode','Kollam','Surat','Vadodara','Rajkot','Nashik','Aurangabad','Solapur','Kolhapur','Thane','Navi Mumbai','Ludhiana','Amritsar','Jalandhar','Dehradun','Haridwar','Varanasi','Allahabad','Kanpur','Agra','Meerut','Noida','Gurgaon','Faridabad','Ghaziabad','Jodhpur','Udaipur','Kota','Ajmer','Raipur','Bilaspur','Gwalior','Jabalpur','Ujjain','Dhanbad','Jamshedpur','Bokaro','Cuttack','Rourkela','Sambalpur','Siliguri','Durgapur','Asansol','Dibrugarh','Jorhat','Imphal','Shillong','Aizawl','Gangtok','Agartala','Itanagar','Kohima','Srinagar','Jammu','Leh','Pondicherry','Goa','Port Blair','Other'];
+var _CASTES = {
+  Hindu:['Brahmin','Kshatriya','Vaishya','Shudra','Lingayat','Vokkaliga','Reddy','Naidu','Nair','Ezhava','Maratha','Rajput','Jat','Yadav','Kurmi','Patel','Agarwal','Gupta','Baniya','Kayastha','Khatri','Arora','Bhumihar','Tyagi','Saini','Gowda','Bunts','Billava','Devanga','Kuruba','Madivala','Ganiga','Vishwakarma','Scheduled Caste','Scheduled Tribe','OBC','Other'],
+  Muslim:['Syed','Sheikh','Mughal','Pathan','Ansari','Qureshi','Bohra','Memon','Khoja','Sunni','Shia','Other'],
+  Christian:['Roman Catholic','Protestant','Syrian Christian','CSI','CNI','Pentecostal','Seventh Day Adventist','Marthoma','Latin Catholic','Other'],
+  Sikh:['Jat Sikh','Khatri Sikh','Ramgarhia','Arora Sikh','Saini Sikh','Ravidasia','Mazhabhi','Other'],
+  Buddhist:['Mahar','Navayana','Theravada','Mahayana','Other'],
+  Jain:['Digambar','Shwetambar','Agarwal Jain','Oswal Jain','Other'],
+  'Parsi / Zoroastrian':['Parsi','Irani','Other'],
+  Other:['Other']
+};
+
+function populateSelect(id, options, selected) {
+  var el = document.getElementById(id); if (!el) return;
+  var hasEmpty = el.querySelector('option[value=""]');
+  // Keep the first empty/placeholder option if exists
+  var start = hasEmpty ? 1 : 0;
+  while (el.options.length > start) el.remove(start);
+  options.forEach(function(v) { var o = document.createElement('option'); o.value = v; o.textContent = v; el.appendChild(o); });
+  if (selected) el.value = selected;
+}
+
+function populateAgeDropdowns() {
+  var ages = [];
+  for (var i = 18; i <= 70; i++) ages.push(String(i));
+  populateSelect('age', ages);
+  populateSelect('editAge', ages);
+}
+
+function populateHeightDropdowns() {
+  var heights = [];
+  for (var ft = 4; ft <= 7; ft++) {
+    for (var inc = 0; inc <= 11; inc++) {
+      if (ft === 7 && inc > 0) break;
+      heights.push(ft + "'" + inc + '"');
+    }
+  }
+  populateSelect('height', heights);
+  populateSelect('editHeight', heights);
+}
+
+function populateLocationDropdowns() {
+  populateSelect('location', _LOCATIONS);
+  populateSelect('editLocation', _LOCATIONS);
+}
+
+function populateCasteForReligion(religionId, casteId, selected) {
+  var rel = document.getElementById(religionId);
+  if (!rel) return;
+  var castes = _CASTES[rel.value] || _CASTES['Other'] || ['Other'];
+  populateSelect(casteId, castes, selected);
+}
+
+// Init dropdowns on page load
+(function() {
+  populateAgeDropdowns();
+  populateHeightDropdowns();
+  populateLocationDropdowns();
+  // Religion -> Caste dependency
+  var relReg = document.getElementById('religion');
+  var relEdit = document.getElementById('editReligion');
+  if (relReg) relReg.addEventListener('change', function() { populateCasteForReligion('religion','caste'); });
+  if (relEdit) relEdit.addEventListener('change', function() { populateCasteForReligion('editReligion','editCaste'); });
+})();
+
 // ===== CHAR COUNT =====
 function updateCharCount(el, countId) {
   var max = Number(el.getAttribute('maxlength')) || 50;
@@ -226,6 +292,36 @@ function smartLoad(dataKey, fetchFn, renderFn) {
 }
 
 // ===== PROFILE DATA MANAGER =====
+var GITHUB_PROFILES_URL = 'https://rishtas.github.io/v2/data/profiles.json';
+var PROFILE_ENCRYPT_KEY = 'r1sht4s_pr0f1l3s_2024_s3cur3';
+
+function decryptProfileData(encoded) {
+  try {
+    var raw = atob(encoded);
+    var out = [];
+    for (var i = 0; i < raw.length; i++) {
+      out.push(String.fromCharCode(raw.charCodeAt(i) ^ PROFILE_ENCRYPT_KEY.charCodeAt(i % PROFILE_ENCRYPT_KEY.length)));
+    }
+    return JSON.parse(out.join(''));
+  } catch(e) { return null; }
+}
+
+function fetchProfilesFromGitHub(gender, onDone) {
+  var gen = gender === "63889cfb" ? "Female" : "Male";
+  fetch(GITHUB_PROFILES_URL + '?t=' + Date.now()).then(function(r) { return r.json(); }).then(function(data) {
+    if (!data.d || !data.ts) throw new Error('empty');
+    var decrypted = decryptProfileData(data.d);
+    if (!decrypted || !decrypted.profiles) throw new Error('decrypt failed');
+    var filtered = decrypted.profiles.filter(function(p) { return String(p.gender) === gen; });
+    lsSet('allProfiles', filtered);
+    lsSetTs('allProfiles', data.ts);
+    onDone(filtered);
+  }).catch(function() {
+    // GitHub cache unavailable, fall back to backend
+    onDone(null);
+  });
+}
+
 function fetchAllProfilesFromServer(email, gender, onDone) {
   var all = [], uProf = null;
   function fetchPage(pg) {
@@ -239,16 +335,42 @@ function fetchAllProfilesFromServer(email, gender, onDone) {
   fetchPage(0);
 }
 
+function fetchUserProfile(email, gender, onDone) {
+  // Fetch just page 0 to get userProfile (own profile data + phone)
+  api.getProfiles(email, gender, 0).then(function(result) {
+    if (result.userProfile) { lsSet('userProfile', result.userProfile); }
+    onDone(result.userProfile);
+  }).catch(function() { onDone(null); });
+}
+
 function initProfiles(email, gender) {
   currentEmail = email; currentGender = gender;
+  // Try localStorage cache first
   if (isCachedToday('allProfiles')) {
     var cached = lsGet('allProfiles'), uCached = lsGet('userProfile');
-    if (cached) { _allProfiles = dailyShuffle(cached); _userProfile = uCached; _displayPage = 0; _renderedCount = 0; renderProfilePage(); populateFilters(); hideLoader(); return; }
+    if (cached) {
+      _allProfiles = dailyShuffle(cached); _userProfile = uCached; _displayPage = 0; _renderedCount = 0;
+      renderProfilePage(); populateFilters(); hideLoader();
+      // Fetch own profile in background if not cached
+      if (!uCached) fetchUserProfile(email, gender, function(up) { if (up) _userProfile = up; });
+      return;
+    }
   }
   showLoader('Discovering profiles...');
-  fetchAllProfilesFromServer(email, gender, function(all, uProf) {
-    _allProfiles = dailyShuffle(all); _userProfile = uProf; _displayPage = 0; _renderedCount = 0;
-    renderProfilePage(); populateFilters(); hideLoader();
+  // Try GitHub cache first, then backend fallback
+  fetchProfilesFromGitHub(gender, function(ghProfiles) {
+    if (ghProfiles && ghProfiles.length > 0) {
+      _allProfiles = dailyShuffle(ghProfiles); _displayPage = 0; _renderedCount = 0;
+      renderProfilePage(); populateFilters(); hideLoader();
+      // Fetch own profile from backend (GitHub cache doesn't have it)
+      fetchUserProfile(email, gender, function(up) { if (up) _userProfile = up; });
+    } else {
+      // Fallback to full backend fetch
+      fetchAllProfilesFromServer(email, gender, function(all, uProf) {
+        _allProfiles = dailyShuffle(all); _userProfile = uProf; _displayPage = 0; _renderedCount = 0;
+        renderProfilePage(); populateFilters(); hideLoader();
+      });
+    }
   });
 }
 
@@ -389,9 +511,11 @@ function renderUserProfile() {
   document.getElementById("editLinkedin").value = u.linkedin || '';
   document.getElementById("editInstagram").value = u.instagram || '';
   document.getElementById("editLocation").value = u.location; document.getElementById("editInterests").value = u.interests;
-  document.getElementById("editCaste").value = u.caste; document.getElementById("editPhone").value = u.phone;
+  document.getElementById("editReligion").value = u.religion || '';
+  populateCasteForReligion('editReligion','editCaste', u.caste);
+  document.getElementById("editPhone").value = u.phone;
   document.getElementById("editEmail").value = u.email; document.getElementById("editPhotos").src = uPhotos[0] || '';
-  document.getElementById("editReligion").value = u.religion; document.getElementById("editSubcaste").value = u.subcaste;
+  document.getElementById("editSubcaste").value = u.subcaste || '';
   document.getElementById("editPassword").value = u.password;
 }
 
@@ -621,11 +745,18 @@ function login() {
   showLoader('Signing in...');
   api.checkLogin(e, p, cap).then(function(r) {
     if (r.success) {
+      var SESSION_DAYS = 7;
+      localStorage.setItem('rishtas_authToken', r.token);
+      localStorage.setItem('rishtas_sessionExpiry', String(Date.now() + SESSION_DAYS * 24 * 60 * 60 * 1000));
+      localStorage.setItem('rishtas_sessionEmail', e);
+      localStorage.setItem('rishtas_sessionRid', r.rid);
+      var gen = r.gen === "Male" ? "63889cfb" : "b719ce18";
+      localStorage.setItem('rishtas_sessionGender', gen);
       sessionStorage.setItem('authToken', r.token);
       sessionStorage.setItem('sessionEmail', e);
       sessionStorage.setItem('sessionRid', r.rid);
-      sessionStorage.setItem('sessionG', r.gen === "Male" ? "63889cfb" : "b719ce18");
-      currentEmail = e; currentGender = sessionStorage.getItem('sessionG');
+      sessionStorage.setItem('sessionG', gen);
+      currentEmail = e; currentGender = gen;
       showApp(); showView('search');
       showLoader('Discovering profiles...');
       showInactiveNotice();
@@ -709,23 +840,30 @@ function saveUserProfile() {
 window.onload = function() {
   showLoader('Welcome...');
   initObservers();
-  var token = sessionStorage.getItem('authToken');
-  var em = sessionStorage.getItem('sessionEmail');
-  if (token && em) {
-    // Validate session with server
-    api.getSession().then(function(session) {
-      currentEmail = session.email;
-      currentGender = session.gender === "Male" ? "63889cfb" : (session.gender === "Female" ? "b719ce18" : session.gender);
-      sessionStorage.setItem('sessionG', currentGender);
-      sessionStorage.setItem('sessionRid', session.rid);
-      showApp(); showView('search');
-      showInactiveNotice();
-      initProfiles(currentEmail, currentGender);
-    }).catch(function() {
-      // Token invalid/expired
-      hideLoader(); showLanding();
-    });
+  // Check localStorage for valid session (no backend call)
+  var token = localStorage.getItem('rishtas_authToken');
+  var expiry = Number(localStorage.getItem('rishtas_sessionExpiry')) || 0;
+  var em = localStorage.getItem('rishtas_sessionEmail');
+  var rid = localStorage.getItem('rishtas_sessionRid');
+  var gen = localStorage.getItem('rishtas_sessionGender');
+  if (token && em && Date.now() < expiry) {
+    // Session still valid locally, restore to sessionStorage
+    sessionStorage.setItem('authToken', token);
+    sessionStorage.setItem('sessionEmail', em);
+    sessionStorage.setItem('sessionRid', rid);
+    sessionStorage.setItem('sessionG', gen);
+    currentEmail = em; currentGender = gen;
+    showApp(); showView('search');
+    showInactiveNotice();
+    initProfiles(em, gen);
   } else {
+    // Expired or no session, clear everything
+    localStorage.removeItem('rishtas_authToken');
+    localStorage.removeItem('rishtas_sessionExpiry');
+    localStorage.removeItem('rishtas_sessionEmail');
+    localStorage.removeItem('rishtas_sessionRid');
+    localStorage.removeItem('rishtas_sessionGender');
+    sessionStorage.clear();
     hideLoader(); showLanding();
   }
 };

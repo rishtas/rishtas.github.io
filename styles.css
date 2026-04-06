@@ -175,6 +175,7 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;bac
 .form-card .form-sub{font-size:.85rem;color:rgba(255,255,255,0.7);margin-bottom:20px}
 .form-card form{display:grid;grid-template-columns:1fr 1fr;gap:0 16px}
 .form-card label{display:block;font-size:.68rem;font-weight:700;color:rgba(255,255,255,0.7);text-transform:uppercase;letter-spacing:.8px;margin:12px 0 4px}
+.form-card label.req::after{content:' *';color:var(--pink);font-weight:700}
 .form-card .form-full{grid-column:1/-1}
 .form-card input[type="text"],.form-card input[type="password"],.form-card input[type="tel"],.form-card select{width:100%;padding:12px 16px;border:1px solid rgba(255,255,255,0.08);border-radius:var(--radius-sm);font-size:.92rem;outline:none;background:rgba(255,255,255,0.05);color:#fff;transition:all .2s}
 .form-card input[type="file"]{display:none}
@@ -272,7 +273,7 @@ footer .logo{justify-content:center;margin-bottom:8px;font-size:1.1rem}
   .hero-sub{text-align:center;margin-left:auto;margin-right:auto}
   .hero-left .hero-free{margin-bottom:12px}
   .hero-left #heroCTA{justify-content:center}
-  .hero-right{justify-content:center}
+  .hero-right{justify-content:center;width:100%;padding:0 16px;box-sizing:border-box}
   .hero-right .login-card{max-width:100%}
   .form-card{padding:24px 18px}
   .form-card form{grid-template-columns:1fr}
@@ -290,7 +291,7 @@ footer .logo{justify-content:center;margin-bottom:8px;font-size:1.1rem}
 @media(max-width:500px){.nav-pill-btn{padding:7px 10px;font-size:.75rem}.nav-pill-btn span{display:none}}
 
 /* ===== EXPANDABLE LOGIN CARD ===== */
-.login-expandable{max-height:0;overflow:hidden;opacity:0;margin-top:0;padding:0 30px;transition:max-height .5s cubic-bezier(.4,0,.2,1),opacity .4s ease .1s,margin-top .4s ease,padding .4s ease;box-shadow:none;width:100%;max-width:380px}
+.login-expandable{max-height:0;overflow:hidden;opacity:0;margin-top:0;padding:0 30px;transition:max-height .5s cubic-bezier(.4,0,.2,1),opacity .4s ease .1s,margin-top .4s ease,padding .4s ease;box-shadow:none;width:100%;max-width:380px;margin-left:auto;margin-right:auto}
 .login-expandable.expanded{max-height:800px;opacity:1;margin-top:32px;padding:36px 30px;box-shadow:0 20px 60px rgba(30,21,40,.35),0 0 80px rgba(184,69,106,.08)}
 .hero-cta-collapsible{transition:max-height .3s ease,opacity .3s ease,margin .3s ease;overflow:hidden}
 .hero-cta-collapsible.collapsed{max-height:0!important;opacity:0!important;margin-top:0!important;pointer-events:none}

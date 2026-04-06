@@ -5,12 +5,16 @@
 var API_URL = 'https://script.google.com/macros/s/AKfycbylwNtGFQf3GCKoNOSK2tbKfwwVkBI1eZb-Wql97vHrI2_aJe4mGMAgCi6tFt3Y2asT6w/exec';
 
 function getAuthToken() {
-  return sessionStorage.getItem('authToken') || '';
+  return localStorage.getItem('rishtas_authToken') || '';
 }
 
 function handleAuthError(data) {
   if (data && data.error === 'AUTH_REQUIRED') {
-    // Session expired or invalid: clear everything and show login
+    localStorage.removeItem('rishtas_authToken');
+    localStorage.removeItem('rishtas_sessionExpiry');
+    localStorage.removeItem('rishtas_sessionEmail');
+    localStorage.removeItem('rishtas_sessionRid');
+    localStorage.removeItem('rishtas_sessionGender');
     sessionStorage.clear();
     try { var keys = []; for (var i = 0; i < localStorage.length; i++) { var k = localStorage.key(i); if (k && k.indexOf('rishtas_') === 0) keys.push(k); } keys.forEach(function(k) { localStorage.removeItem(k); }); } catch(e) {}
     showAlert('Session expired. Please login again.');

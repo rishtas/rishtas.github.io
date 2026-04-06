@@ -39,6 +39,16 @@ Upload `index.html`, `styles.css`, `api.js`, `app.js` to GitHub Pages (or any st
 ### 4. Set Up Cleanup Trigger
 In Apps Script: Triggers > Add Trigger > `cleanupInactiveUsers` > Time-driven > Day timer
 
+### 5. Set Up GitHub Actions (Profile Cache)
+The GitHub Action fetches all profiles every 3 hours, encrypts them, and stores in `v2/data/profiles.json`. This eliminates heavy backend calls for profile discovery.
+
+1. In Apps Script > Project Settings > Script Properties, add: `DUMP_SECRET` = any secret string
+2. In your GitHub repo > Settings > Secrets and variables > Actions, add these secrets:
+   - `API_URL`: Your Apps Script deployment URL
+   - `DUMP_SECRET`: Same secret string as step 1
+   - `ENCRYPT_KEY`: `r1sht4s_pr0f1l3s_2024_s3cur3` (must match `PROFILE_ENCRYPT_KEY` in app.js)
+3. The workflow runs automatically every 3 hours, or trigger manually from Actions tab
+
 ## Benefits Over V1
 
 - **Faster page loads**: HTML/CSS/JS served from CDN, not Apps Script
