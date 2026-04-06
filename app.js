@@ -8,6 +8,15 @@ var _allProfiles = null, _userProfile = null, _displayPage = 0;
 var DISPLAY_PAGE_SIZE = 20;
 var LS_PREFIX = 'rishtas_';
 
+// ===== CHAR COUNT =====
+function updateCharCount(el, countId) {
+  var max = Number(el.getAttribute('maxlength')) || 50;
+  var len = el.value.length;
+  var span = document.getElementById(countId);
+  span.textContent = len + '/' + max;
+  span.style.color = len >= max ? '#e74c3c' : 'rgba(255,255,255,.4)';
+}
+
 // ===== IMAGE COMPRESSION =====
 function onFileSelected(input, areaId) {
   var area = document.getElementById(areaId);
@@ -641,7 +650,7 @@ function registerUser() {
   showLoader2('Creating your profile...');
   var f = { name:document.getElementById("fname").value, age:document.getElementById("age").value, gender:(document.querySelector('input[name="gender"]:checked')||{}).value, height:document.getElementById("height").value, education:document.getElementById("education").value, occupation:document.getElementById("occupation").value, income:document.getElementById("income").value, maritalStatus:document.getElementById("maritalStatus").value, about:document.getElementById("about").value, location:document.getElementById("location").value, interests:document.getElementById("interests").value, caste:document.getElementById("caste").value, subcaste:document.getElementById("subcaste").value, religion:document.getElementById("religion").value, phone:document.getElementById("phone").value, email:document.getElementById("emailR").value, password:document.getElementById("passwordR").value.trim(), confirmPassword:document.getElementById("confirmPassword").value.trim(), timeOfBirth:document.getElementById("timeOfBirth").value, placeOfBirth:document.getElementById("placeOfBirth").value, rashi:document.getElementById("rashi").value, nakshatra:document.getElementById("nakshatra").value, motherTongue:document.getElementById("motherTongue").value, preferences:document.getElementById("preferences").value, smoking:document.getElementById("smoking").value, drinking:document.getElementById("drinking").value, linkedin:document.getElementById("linkedin").value, instagram:document.getElementById("instagram").value };
   var ph = document.getElementById("photos").files[0], ph2 = document.getElementById("photos2").files[0], cap = getCaptchaResponse('regCaptcha');
-  var chk = [[!cap,'Complete the CAPTCHA'],[!f.name,'Enter name.'],[!f.age,'Enter age.'],[!f.gender,'Select gender.'],[!f.location,'Enter location.'],[!f.interests,'Enter interests.'],[!f.caste,'Enter caste.'],[!f.phone,'Enter phone.'],[!f.email,'Enter email.'],[!f.password,'Enter password.'],[!f.confirmPassword,'Confirm password.'],[!ph,'Select at least one photo.'],[f.password!==f.confirmPassword,'Passwords do not match.']];
+  var chk = [[!cap,'Complete the CAPTCHA'],[!f.name,'Enter name.'],[!f.age,'Enter age.'],[!f.gender,'Select gender.'],[!f.location,'Enter location.'],[!f.interests,'Enter interests.'],[!f.caste,'Enter caste.'],[!f.phone,'Enter phone.'],[!f.email,'Enter email.'],[!f.password,'Enter password.'],[!f.confirmPassword,'Confirm password.'],[!ph,'Select at least one photo.'],[f.password!==f.confirmPassword,'Passwords do not match.'],[f.about&&f.about.length>50,'About Me must be 50 characters or less.'],[f.preferences&&f.preferences.length>50,'Preferences must be 50 characters or less.']];
   for (var i = 0; i < chk.length; i++) { if (chk[i][0]) { hideLoader2(); showAlert(chk[i][1]); return; } }
 
   compressImage(ph, 800, 0.75, function(b64) {
@@ -674,7 +683,7 @@ function saveUserProfile() {
   showLoader('Updating profile...');
   var f = { email:document.getElementById("editEmail").value, name:document.getElementById("editName").value, age:document.getElementById("editAge").value, gender:(document.querySelector('input[name="editGender"]:checked')||{}).value, height:document.getElementById("editHeight").value, education:document.getElementById("editEducation").value, occupation:document.getElementById("editOccupation").value, income:document.getElementById("editIncome").value, maritalStatus:document.getElementById("editMaritalStatus").value, about:document.getElementById("editAbout").value, location:document.getElementById("editLocation").value, interests:document.getElementById("editInterests").value, caste:document.getElementById("editCaste").value, subcaste:document.getElementById("editSubcaste").value, religion:document.getElementById("editReligion").value, phone:document.getElementById("editPhone").value, password:document.getElementById("editPassword").value.trim(), timeOfBirth:document.getElementById("editTimeOfBirth").value, placeOfBirth:document.getElementById("editPlaceOfBirth").value, rashi:document.getElementById("editRashi").value, nakshatra:document.getElementById("editNakshatra").value, motherTongue:document.getElementById("editMotherTongue").value, preferences:document.getElementById("editPreferences").value, smoking:document.getElementById("editSmoking").value, drinking:document.getElementById("editDrinking").value, linkedin:document.getElementById("editLinkedin").value, instagram:document.getElementById("editInstagram").value };
   var ph = null, ph2 = null; try { ph = document.getElementById("newphotos").files[0]; } catch(e) {} try { ph2 = document.getElementById("newphotos2").files[0]; } catch(e) {}
-  var chk = [[!f.age,'Enter age.'],[!f.gender,'Select gender.'],[!f.location,'Enter location.'],[!f.name,'Enter name.'],[!f.interests,'Enter interests.'],[!f.caste,'Enter caste.'],[!f.phone,'Enter phone.'],[!f.email,'Enter email.'],[!f.password,'Enter password.']];
+  var chk = [[!f.age,'Enter age.'],[!f.gender,'Select gender.'],[!f.location,'Enter location.'],[!f.name,'Enter name.'],[!f.interests,'Enter interests.'],[!f.caste,'Enter caste.'],[!f.phone,'Enter phone.'],[!f.email,'Enter email.'],[!f.password,'Enter password.'],[f.about&&f.about.length>50,'About Me must be 50 characters or less.'],[f.preferences&&f.preferences.length>50,'Preferences must be 50 characters or less.']];
   for (var i = 0; i < chk.length; i++) { if (chk[i][0]) { hideLoader(); showAlert(chk[i][1]); return; } }
   var editCap = getCaptchaResponse('editCaptcha');
   if (!editCap) { hideLoader(); showAlert('Please complete the CAPTCHA.'); return; }
