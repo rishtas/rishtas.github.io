@@ -150,6 +150,7 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;bac
 .card-actions button.act-danger:hover{background:rgba(255,100,100,.25)}
 .card-actions button.act-success{flex:1;padding:10px 8px;border:1px solid rgba(110,231,183,.12);font-size:.78rem;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;border-radius:980px;background:rgba(110,231,183,.12);color:#6ee7b7}
 .card-actions button.act-success:hover{background:rgba(110,231,183,.22)}
+.card-actions .act-call{flex:1;padding:10px 8px;border:1px solid rgba(110,231,183,.15);font-size:.78rem;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;border-radius:980px;background:rgba(110,231,183,.12);color:#6ee7b7;text-decoration:none}
 
 /* ===== STATUS BADGE ===== */
 .status-badge{text-align:center;padding:9px 16px;font-size:.73rem;font-weight:700;text-transform:uppercase;letter-spacing:1.2px}
