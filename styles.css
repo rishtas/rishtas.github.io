@@ -94,7 +94,6 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;bac
 .login-card .secure-note{text-align:center;font-size:.68rem;color:var(--gray-300);margin-top:16px;display:flex;align-items:center;justify-content:center;gap:5px}
 
 /* ===== APP SECTIONS ===== */
-#app-section{min-height:100vh}
 .section-header{text-align:center;padding:100px 24px 24px;position:relative}
 .section-header::before{content:'';position:absolute;top:40px;left:50%;transform:translateX(-50%);width:200px;height:200px;border-radius:50%;background:radial-gradient(circle,rgba(184,69,106,.06) 0%,transparent 70%);pointer-events:none}
 .section-header h2{font-family:'Cormorant Garamond',serif;font-size:2.4rem;font-weight:700;color:#fff;position:relative}
@@ -293,7 +292,7 @@ footer .logo{justify-content:center;margin-bottom:8px;font-size:1.1rem}
   .hero-right .login-card{max-width:calc(100% - 32px);margin:0 auto;padding:28px 20px}
   .form-card{padding:24px 18px}
   .form-card form{grid-template-columns:1fr}
-  .section-header{padding:90px 20px 16px}
+  .section-header{padding:70px 20px 12px}
   .section-header h2{font-size:1.8rem}
   .form-wrap{padding:40px 16px 100px}
   .features-grid{gap:16px}
