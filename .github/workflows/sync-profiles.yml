@@ -45,10 +45,11 @@ jobs:
               sys.exit(1)
 
           profiles = resp.get('data', {}).get('profiles', [])
+          ads = resp.get('data', {}).get('ads', [])
           ts = resp.get('data', {}).get('ts', 0)
-          print(f"Got {len(profiles)} profiles, ts={ts}")
+          print(f"Got {len(profiles)} profiles, {len(ads)} ads, ts={ts}")
 
-          payload = json.dumps({'profiles': profiles, 'ts': ts}, separators=(',', ':'))
+          payload = json.dumps({'profiles': profiles, 'ads': ads, 'ts': ts}, separators=(',', ':'))
 
           encrypted = []
           for i, ch in enumerate(payload):
