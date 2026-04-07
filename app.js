@@ -145,7 +145,7 @@ var debouncedFilterProfiles = debounce(function() { applyFilters(); }, 300);
 var debouncedFilterWishlist = debounce(function() { filterCards('searchInput2', 'wishlist-container'); }, 300);
 
 // ===== ENCRYPTED LOCAL STORAGE =====
-function _encKey() { var t = sessionStorage.getItem('sessionToken'); return t ? String(t) : 'r1sht4s'; }
+function _encKey() { var t = localStorage.getItem('rishtas_encKey') || sessionStorage.getItem('sessionToken'); return t ? String(t) : 'r1sht4s'; }
 function _xorEnc(text, key) { var o = []; for (var i = 0; i < text.length; i++) o.push(String.fromCharCode(text.charCodeAt(i) ^ key.charCodeAt(i % key.length))); return btoa(o.join('')); }
 function _xorDec(enc, key) { try { var t = atob(enc), o = []; for (var i = 0; i < t.length; i++) o.push(String.fromCharCode(t.charCodeAt(i) ^ key.charCodeAt(i % key.length))); return o.join(''); } catch(e) { return null; } }
 function lsGet(k) { try { var r = localStorage.getItem(LS_PREFIX + k); if (!r) return null; var d = _xorDec(r, _encKey()); return d ? JSON.parse(d) : null; } catch(e) { return null; } }
@@ -193,6 +193,7 @@ function showAlert(msg) {
 }
 function closeAlert() { document.getElementById('toast').classList.remove('show'); }
 function esc(s) { return s == null ? '' : String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
+function fmtTime(t) { if (!t) return ''; var s = String(t); if (s.indexOf(':') !== -1 && s.length <= 5) return s; try { var d = new Date(s); if (!isNaN(d)) return ('0'+d.getHours()).slice(-2)+':'+('0'+d.getMinutes()).slice(-2); } catch(e) {} return s; }
 function getStatusClass(s) { return s ? s.toLowerCase().replace(/\s+/g, '-') : ''; }
 
 // ===== INACTIVE NOTICE =====
@@ -254,6 +255,13 @@ var observer = new IntersectionObserver(function(entries) { entries.forEach(func
 function initObservers() { document.querySelectorAll('.reveal,.card').forEach(function(el) { observer.observe(el); }); }
 window.addEventListener('scroll', function() { var n = document.getElementById('mainNav'); if (n) n.classList.toggle('scrolled', window.scrollY > 10); });
 
+// ===== CLOSE MODALS ON OUTSIDE CLICK =====
+document.addEventListener('click', function(e) {
+  if (e.target.classList.contains('modal-overlay') && e.target.classList.contains('active')) {
+    e.target.classList.remove('active');
+  }
+});
+
 // ===== SESSION =====
 function djb2(s) { var h = 0; for (var i = 0; i < s.length; i++) { h = ((h << 5) - h) + s.charCodeAt(i); h = h & h; } return h; }
 function setSession(pw) { sessionStorage.setItem('sessionToken', djb2(pw)); }
@@ -292,7 +300,7 @@ function smartLoad(dataKey, fetchFn, renderFn) {
 }
 
 // ===== PROFILE DATA MANAGER =====
-var GITHUB_PROFILES_URL = 'https://rishtas.github.io/v2/data/profiles.json';
+var GITHUB_PROFILES_URL = 'data/profiles.json';
 var PROFILE_ENCRYPT_KEY = 'r1sht4s_pr0f1l3s_2024_s3cur3';
 
 function decryptProfileData(encoded) {
@@ -306,6 +314,7 @@ function decryptProfileData(encoded) {
   } catch(e) { return null; }
 }
 
+var _cachedAds = null;
 function fetchProfilesFromGitHub(gender, onDone) {
   var gen = gender === "63889cfb" ? "Female" : "Male";
   fetch(GITHUB_PROFILES_URL + '?t=' + Date.now()).then(function(r) { return r.json(); }).then(function(data) {
@@ -313,6 +322,7 @@ function fetchProfilesFromGitHub(gender, onDone) {
     var decrypted = decryptProfileData(data.d);
     if (!decrypted || !decrypted.profiles) throw new Error('decrypt failed');
     var filtered = decrypted.profiles.filter(function(p) { return String(p.gender) === gen; });
+    if (decrypted.ads) _cachedAds = decrypted.ads;
     lsSet('allProfiles', filtered);
     lsSetTs('allProfiles', data.ts);
     onDone(filtered);
@@ -330,7 +340,7 @@ function fetchAllProfilesFromServer(email, gender, onDone) {
       if (result.userProfile) uProf = result.userProfile;
       if (result.hasMore) fetchPage(pg + 1);
       else { lsSet('allProfiles', all); if (uProf) lsSet('userProfile', uProf); lsSetTs('allProfiles', Date.now()); onDone(all, uProf); }
-    });
+    }).catch(function(err) { hideLoader(); if (err.message !== 'AUTH_REQUIRED') showAlert('Failed to load profiles.'); });
   }
   fetchPage(0);
 }
@@ -343,8 +353,23 @@ function fetchUserProfile(email, gender, onDone) {
   }).catch(function() { onDone(null); });
 }
 
+function loadAdsFromGitHub() {
+  if (_cachedAds) return; // Already loaded
+  fetch(GITHUB_PROFILES_URL + '?t=' + Date.now()).then(function(r) { return r.json(); }).then(function(data) {
+    if (!data.d) return;
+    var decrypted = decryptProfileData(data.d);
+    if (decrypted && decrypted.ads && decrypted.ads.length) {
+      _cachedAds = decrypted.ads;
+      // Re-render to inject ads if profiles already shown
+      if (_allProfiles && _renderedCount > 0) { _renderedCount = 0; renderProfilePage(); }
+    }
+  }).catch(function() {});
+}
+
 function initProfiles(email, gender) {
   currentEmail = email; currentGender = gender;
+  // Load ads in background
+  loadAdsFromGitHub();
   // Try localStorage cache first
   if (isCachedToday('allProfiles')) {
     var cached = lsGet('allProfiles'), uCached = lsGet('userProfile');
@@ -379,26 +404,147 @@ function cardHTML(p, btns, statusHTML) {
   var photos = String(p.photos || '').split(',').filter(function(u) { return u.trim(); });
   var gallery = photos.map(function(u, idx) { return '<img src="' + esc(u.trim()) + '" loading="lazy" onclick="event.stopPropagation();openPhotoViewer(\'' + esc(p.photos) + '\',' + idx + ')" onerror="handleImgError(this)">'; }).join('');
   var dots = photos.length > 1 ? '<div class="card-dots">' + photos.map(function(_, i) { return '<span' + (i === 0 ? ' class="active"' : '') + '></span>'; }).join('') + '</div>' : '';
-  return '<div class="card reveal" onclick="toggleCardDetails(this)">' + (statusHTML || '') +
+  return '<div class="card reveal">' + (statusHTML || '') +
     '<div class="card-img-wrap"><div class="card-gallery" onscroll="updateDots(this)">' + gallery + '</div>' + dots +
     '<div class="card-overlay"><h2>' + esc(p.name) + ', ' + esc(p.age) + '</h2><div class="loc"><i class="fas fa-map-marker-alt"></i> ' + esc(p.location) + '</div></div></div>' +
-    '<p class="card-more"><i class="fa-solid fa-chevron-down" style="font-size:.6rem"></i> More details</p>' +
-    '<div class="card-details">' +
-      (p.about ? '<div class="detail-row"><div class="detail-icon gold"><i class="fa-solid fa-quote-left"></i></div><div class="detail-text"><span class="detail-label">About</span><span class="detail-value">' + esc(p.about) + '</span></div></div>' : '') +
-      (p.height ? '<div class="detail-row"><div class="detail-icon pink"><i class="fa-solid fa-ruler-vertical"></i></div><div class="detail-text"><span class="detail-label">Height</span><span class="detail-value">' + esc(p.height) + '</span></div></div>' : '') +
-      (p.maritalStatus ? '<div class="detail-row"><div class="detail-icon gold"><i class="fa-solid fa-ring"></i></div><div class="detail-text"><span class="detail-label">Marital Status</span><span class="detail-value">' + esc(p.maritalStatus) + '</span></div></div>' : '') +
-      (p.education ? '<div class="detail-row"><div class="detail-icon purple"><i class="fa-solid fa-graduation-cap"></i></div><div class="detail-text"><span class="detail-label">Education</span><span class="detail-value">' + esc(p.education) + '</span></div></div>' : '') +
-      (p.occupation ? '<div class="detail-row"><div class="detail-icon purple"><i class="fa-solid fa-briefcase"></i></div><div class="detail-text"><span class="detail-label">Occupation</span><span class="detail-value">' + esc(p.occupation) + '</span></div></div>' : '') +
-      (p.income ? '<div class="detail-row"><div class="detail-icon gold"><i class="fa-solid fa-indian-rupee-sign"></i></div><div class="detail-text"><span class="detail-label">Income</span><span class="detail-value">' + esc(p.income) + '</span></div></div>' : '') +
-      (p.motherTongue ? '<div class="detail-row"><div class="detail-icon pink"><i class="fa-solid fa-language"></i></div><div class="detail-text"><span class="detail-label">Mother Tongue</span><span class="detail-value">' + esc(p.motherTongue) + '</span></div></div>' : '') +
-      ((p.smoking && p.smoking !== 'No') || (p.drinking && p.drinking !== 'No') ? '<div class="detail-row"><div class="detail-icon purple"><i class="fa-solid fa-smoking-ban"></i></div><div class="detail-text"><span class="detail-label">Smoking / Drinking</span><span class="detail-value">' + esc(p.smoking || 'No') + ' / ' + esc(p.drinking || 'No') + '</span></div></div>' : '') +
-      '<div class="detail-row"><div class="detail-icon pink"><i class="fa-solid fa-heart"></i></div><div class="detail-text"><span class="detail-label">Interests</span><span class="detail-value">' + esc(p.interests) + '</span></div></div>' +
-      '<div class="detail-row"><div class="detail-icon gold"><i class="fa-solid fa-hands-praying"></i></div><div class="detail-text"><span class="detail-label">Religion</span><span class="detail-value">' + esc(p.religion) + '</span></div></div>' +
-      '<div class="detail-row"><div class="detail-icon purple"><i class="fa-solid fa-users"></i></div><div class="detail-text"><span class="detail-label">Caste</span><span class="detail-value">' + esc(p.caste) + '</span></div></div>' +
-      (p.subcaste ? '<div class="detail-row"><div class="detail-icon purple"><i class="fa-solid fa-user-group"></i></div><div class="detail-text"><span class="detail-label">Sub-caste</span><span class="detail-value">' + esc(p.subcaste) + '</span></div></div>' : '') +
-    '</div><div class="card-actions">' + btns + '<button style="flex:0;min-width:36px;background:none;border:none;color:rgba(255,255,255,.3);font-size:.85rem;cursor:pointer;padding:8px" onclick="event.stopPropagation();showCardMenu(\'' + esc(p.rid) + '\',\'' + esc(p.name) + '\')"><i class="fa-solid fa-ellipsis-vertical"></i></button></div></div>';
+    '<div class="card-brief">' +
+      (p.education ? '<span class="brief-tag"><i class="fa-solid fa-graduation-cap"></i> ' + esc(p.education) + '</span>' : '') +
+      (p.occupation ? '<span class="brief-tag"><i class="fa-solid fa-briefcase"></i> ' + esc(p.occupation) + '</span>' : '') +
+      (p.religion ? '<span class="brief-tag"><i class="fa-solid fa-hands-praying"></i> ' + esc(p.religion) + '</span>' : '') +
+      (p.height ? '<span class="brief-tag"><i class="fa-solid fa-ruler-vertical"></i> ' + esc(p.height) + '</span>' : '') +
+    '</div>' +
+    '<button class="view-profile-btn" onclick="event.stopPropagation();openProfileDetail(\'' + esc(p.rid) + '\')"><i class="fa-solid fa-user"></i> View Full Profile</button>' +
+    '<div class="card-actions">' + btns + '<button class="card-icon-btn" onclick="event.stopPropagation();shareProfile(\'' + esc(p.rid) + '\')"><i class="fa-solid fa-share-nodes"></i></button><button class="card-icon-btn" onclick="event.stopPropagation();showCardMenu(\'' + esc(p.rid) + '\',\'' + esc(p.name) + '\')"><i class="fa-solid fa-ellipsis-vertical"></i></button></div></div>';
 }
 function toggleCardDetails(el) { var d = el.querySelector('.card-details'), m = el.querySelector('.card-more'); if (!d) return; var open = d.classList.toggle('open'); if (m) m.innerHTML = open ? '<i class="fa-solid fa-chevron-up" style="font-size:.6rem"></i> Less' : '<i class="fa-solid fa-chevron-down" style="font-size:.6rem"></i> More details'; }
+
+function openProfileDetail(rid) {
+  var p = null;
+  if (_allProfiles) { for (var i = 0; i < _allProfiles.length; i++) { if (_allProfiles[i].rid === rid) { p = _allProfiles[i]; break; } } }
+  // Also check wishlist/interests cache
+  if (!p) { var wl = lsGet('wishlist') || []; for (var i = 0; i < wl.length; i++) { if (wl[i].rid === rid) { p = wl[i]; break; } } }
+  if (!p) { var il = lsGet('interests') || []; for (var i = 0; i < il.length; i++) { if (il[i].rid === rid) { p = il[i]; break; } } }
+  if (!p) return;
+  var photos = String(p.photos || '').split(',').filter(function(u) { return u.trim(); });
+  var gallery = photos.map(function(u, idx) { return '<img src="' + esc(u.trim()) + '" loading="lazy" onclick="openPhotoViewer(\'' + esc(p.photos) + '\',' + idx + ')" onerror="handleImgError(this)" style="width:100%;height:280px;object-fit:cover;cursor:pointer">'; }).join('');
+  var dots = photos.length > 1 ? '<div class="profile-dots" style="bottom:12px">' + photos.map(function(_, i) { return '<span' + (i === 0 ? ' class="active"' : '') + '></span>'; }).join('') + '</div>' : '';
+  var html = '<div class="profile-hero" style="border-radius:20px 20px 0 0;overflow:hidden"><div class="profile-gallery" onscroll="updateProfileDots(this)" style="height:280px">' + gallery + '</div>' + dots + '</div>' +
+    '<div style="padding:20px 24px">' +
+      '<h2 style="font-family:Cormorant Garamond,serif;font-size:1.4rem;color:#fff;font-weight:700">' + esc(p.name) + ', ' + esc(p.age) + '</h2>' +
+      '<p style="font-size:.82rem;color:rgba(255,255,255,.5);margin-top:2px"><i class="fas fa-map-marker-alt"></i> ' + esc(p.location) + '</p>' +
+      '<div style="margin-top:16px;display:flex;flex-direction:column;gap:1px">' +
+        _detailRow('gold','fa-quote-left','About',p.about) +
+        _detailRow('pink','fa-ruler-vertical','Height',p.height) +
+        _detailRow('gold','fa-ring','Marital Status',p.maritalStatus) +
+        _detailRow('purple','fa-graduation-cap','Education',p.education) +
+        _detailRow('purple','fa-briefcase','Occupation',p.occupation) +
+        _detailRow('gold','fa-indian-rupee-sign','Income',p.income) +
+        _detailRow('pink','fa-language','Mother Tongue',p.motherTongue) +
+        (((p.smoking && p.smoking !== 'No') || (p.drinking && p.drinking !== 'No')) ? _detailRow('purple','fa-smoking-ban','Smoking / Drinking',(p.smoking||'No')+' / '+(p.drinking||'No')) : '') +
+        _detailRow('pink','fa-heart','Interests',p.interests) +
+        _detailRow('gold','fa-hands-praying','Religion',p.religion) +
+        _detailRow('purple','fa-users','Caste',p.caste) +
+        _detailRow('purple','fa-user-group','Sub-caste',p.subcaste) +
+        (p.rashi ? _detailRow('gold','fa-star','Rashi / Nakshatra',p.rashi + (p.nakshatra ? ' / ' + p.nakshatra : '')) : '') +
+        (p.timeOfBirth ? _detailRow('pink','fa-clock','Birth Time / Place',fmtTime(p.timeOfBirth) + (p.placeOfBirth ? ', ' + p.placeOfBirth : '')) : '') +
+        _detailRow('gold','fa-clipboard-list','Preferences',p.preferences) +
+        (p.linkedin || p.instagram ? '<div class="detail-row"><div class="detail-icon purple"><i class="fa-solid fa-link"></i></div><div class="detail-text"><span class="detail-label">Social</span><span class="detail-value">' + (p.linkedin ? '<a href="' + esc(p.linkedin) + '" target="_blank" style="color:var(--pink);text-decoration:none">LinkedIn</a> ' : '') + (p.instagram ? '<a href="https://instagram.com/' + esc(p.instagram.replace('@','')) + '" target="_blank" style="color:var(--pink);text-decoration:none">Instagram</a>' : '') + '</span></div></div>' : '') +
+        (p.phone && p.status === 'Accepted' ? _detailRow('pink','fa-phone','Phone',p.phone) : '') +
+      '</div>' +
+      '<div style="display:flex;gap:10px;margin-top:20px;padding-bottom:4px">' +
+        '<button style="flex:1;padding:12px;border:none;border-radius:980px;background:linear-gradient(135deg,var(--pink-deep),var(--pink));color:#fff;font-size:.85rem;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px" onclick="event.stopPropagation();addToWishlist(\'' + esc(p.name) + '\',\'' + esc(p.rid) + '\');document.getElementById(\'profileDetailModal\').classList.remove(\'active\')"><i class="fa-regular fa-star"></i> Shortlist</button>' +
+        '<button style="flex:1;padding:12px;border:none;border-radius:980px;background:linear-gradient(135deg,var(--gold),var(--pink-deep));color:#fff;font-size:.85rem;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px" onclick="event.stopPropagation();sendInterest(\'' + esc(p.rid) + '\');document.getElementById(\'profileDetailModal\').classList.remove(\'active\')"><i class="fa-regular fa-paper-plane"></i> Send Interest</button>' +
+      '</div>' +
+      '<button onclick="shareProfile(\'' + esc(p.rid) + '\')" style="width:100%;margin-top:8px;padding:10px;border:1px solid rgba(255,255,255,.08);border-radius:980px;background:transparent;color:rgba(255,255,255,.5);font-size:.78rem;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px"><i class="fa-solid fa-share-nodes"></i> Share Profile</button>' +
+    '</div>';
+  document.getElementById('profileDetailContent').innerHTML = html;
+  document.getElementById('profileDetailModal').classList.add('active');
+}
+function _detailRow(color, icon, label, value) {
+  if (!value) return '';
+  return '<div class="detail-row"><div class="detail-icon ' + color + '"><i class="fa-solid ' + icon + '"></i></div><div class="detail-text"><span class="detail-label">' + esc(label) + '</span><span class="detail-value">' + esc(value) + '</span></div></div>';
+}
+
+function adCardHTML(ad) {
+  var photos = String(ad.photos || '').split(',').filter(function(u) { return u.trim(); });
+  var gallery = photos.map(function(u) { return '<img src="' + esc(u.trim()) + '" loading="lazy" onerror="handleImgError(this)" style="width:100%;height:220px;object-fit:cover;flex-shrink:0;scroll-snap-align:start">'; }).join('');
+  var dots = photos.length > 1 ? '<div class="card-dots">' + photos.map(function(_, i) { return '<span' + (i === 0 ? ' class="active"' : '') + '></span>'; }).join('') + '</div>' : '';
+  return '<div class="ad-card reveal">' +
+    '<div class="ad-badge"><i class="fa-solid fa-bullhorn"></i> Sponsored</div>' +
+    (photos.length ? '<div class="card-img-wrap"><div class="card-gallery" onscroll="updateDots(this)" style="height:220px">' + gallery + '</div>' + dots + '</div>' : '') +
+    '<div style="padding:16px 18px">' +
+      '<h3 style="font-family:Cormorant Garamond,serif;font-size:1.15rem;color:#fff;font-weight:700;margin-bottom:8px">' + esc(ad.title) + '</h3>' +
+      '<p style="font-size:.82rem;color:rgba(255,255,255,.6);line-height:1.5;margin-bottom:14px">' + esc(ad.description) + '</p>' +
+      (ad.buttonText && ad.buttonLink ? '<a href="' + esc(ad.buttonLink) + '" target="_blank" rel="noopener" class="ad-cta-btn">' + esc(ad.buttonText) + ' <i class="fa-solid fa-arrow-up-right-from-square" style="font-size:.7rem"></i></a>' : '') +
+    '</div></div>';
+}
+
+function shareProfile(rid) {
+  var url = window.location.origin + window.location.pathname + '#profile/' + rid;
+  if (navigator.share) {
+    navigator.share({ title: 'Check out this profile on rishtas.in', url: url }).catch(function() {});
+  } else if (navigator.clipboard) {
+    navigator.clipboard.writeText(url).then(function() { showAlert('Profile link copied!'); });
+  } else {
+    prompt('Copy this link:', url);
+  }
+}
+
+function openPublicProfile(rid) {
+  showLoader('Loading profile...');
+  fetch(GITHUB_PROFILES_URL + '?t=' + Date.now()).then(function(r) {
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    return r.json();
+  }).then(function(data) {
+    if (!data.d) throw new Error('empty data');
+    var decrypted = decryptProfileData(data.d);
+    if (!decrypted || !decrypted.profiles) throw new Error('decrypt failed');
+    var p = null;
+    for (var i = 0; i < decrypted.profiles.length; i++) {
+      if (String(decrypted.profiles[i].rid) === String(rid)) { p = decrypted.profiles[i]; break; }
+    }
+    if (!p) throw new Error('RID not found: ' + rid);
+    hideLoader();
+    showPublicProfileModal(p);
+  }).catch(function(err) {
+    console.warn('GitHub cache failed:', err.message, '- trying backend fallback');
+    // Fallback: fetch from backend
+    fetch(API_URL + '?action=getPublicProfile&rid=' + encodeURIComponent(rid)).then(function(r) { return r.json(); }).then(function(r) {
+      hideLoader();
+      if (!r.ok) { showAlert('Profile not found.'); return; }
+      showPublicProfileModal(r.data);
+    }).catch(function() { hideLoader(); showAlert('Could not load profile.'); });
+  });
+}
+
+function showPublicProfileModal(p) {
+  var photos = String(p.photos || '').split(',').filter(function(u) { return u.trim(); });
+  var photo = photos[0] || '';
+  var html = '<div style="position:relative;border-radius:20px 20px 0 0;overflow:hidden">' +
+      (photo ? '<img src="' + esc(photo) + '" onerror="handleImgError(this)" style="width:100%;height:260px;object-fit:cover;display:block;filter:blur(2px)">' : '<div style="height:200px;background:rgba(255,255,255,.03)"></div>') +
+      '<div style="position:absolute;inset:0;background:linear-gradient(transparent 30%,rgba(20,14,30,.95) 100%)"></div>' +
+      '<div style="position:absolute;bottom:16px;left:20px;right:20px;z-index:1">' +
+        '<h2 style="font-family:Cormorant Garamond,serif;font-size:1.5rem;color:#fff;font-weight:700;text-shadow:0 1px 6px rgba(0,0,0,.5)">' + esc(p.name) + ', ' + esc(p.age) + '</h2>' +
+        '<p style="font-size:.82rem;color:rgba(255,255,255,.7);margin-top:2px;text-shadow:0 1px 4px rgba(0,0,0,.4)"><i class="fas fa-map-marker-alt"></i> ' + esc(p.location) + '</p>' +
+      '</div>' +
+    '</div>' +
+    '<div style="padding:20px 24px">' +
+      '<div style="display:flex;flex-direction:column;gap:1px">' +
+        _detailRow('purple','fa-graduation-cap','Education',p.education) +
+        _detailRow('purple','fa-briefcase','Occupation',p.occupation) +
+        _detailRow('gold','fa-hands-praying','Religion',p.religion) +
+        _detailRow('pink','fa-ruler-vertical','Height',p.height) +
+        _detailRow('gold','fa-ring','Marital Status',p.maritalStatus) +
+        _detailRow('pink','fa-language','Mother Tongue',p.motherTongue) +
+      '</div>' +
+      '<div style="margin-top:20px;padding:16px;background:rgba(184,69,106,.06);border:1px solid rgba(184,69,106,.12);border-radius:14px;text-align:center">' +
+        '<p style="font-size:.85rem;color:rgba(255,255,255,.7);margin-bottom:12px"><i class="fa-solid fa-lock" style="color:var(--pink);margin-right:4px"></i> Login to see full profile, photos, and connect</p>' +
+        '<button onclick="document.getElementById(\'profileDetailModal\').classList.remove(\'active\');window.location.hash=\'\';showLanding();setTimeout(expandLoginCard,300)" style="padding:12px 32px;border:none;border-radius:980px;background:linear-gradient(135deg,var(--pink-deep),var(--gold));color:#fff;font-size:.88rem;font-weight:700;cursor:pointer">Login / Register</button>' +
+      '</div>' +
+    '</div>';
+  document.getElementById('profileDetailContent').innerHTML = html;
+  document.getElementById('profileDetailModal').classList.add('active');
+}
 function updateDots(g) { var w = g.closest('.card-img-wrap'); if (!w) return; var dots = w.querySelectorAll('.card-dots span'); if (!dots.length) return; var idx = Math.round(g.scrollLeft / g.offsetWidth); dots.forEach(function(d, i) { d.classList.toggle('active', i === idx); }); }
 function updateProfileDots(g) { var w = g.closest('.profile-hero'); if (!w) return; var dots = w.querySelectorAll('.profile-dots span'); if (!dots.length) return; var idx = Math.round(g.scrollLeft / g.offsetWidth); dots.forEach(function(d, i) { d.classList.toggle('active', i === idx); }); }
 
@@ -427,11 +573,28 @@ function renderProfilePage() {
   }
 
   var newCards = allVisible.slice(_renderedCount);
-  var html = newCards.map(function(p) {
-    return cardHTML(p,
+  var ads = _cachedAds || [];
+  var adInterval = ads.length ? Math.max(3, Math.floor(newCards.length / (ads.length + 1))) : 0;
+  var adIdx = 0;
+  var html = '';
+  for (var ci = 0; ci < newCards.length; ci++) {
+    var p = newCards[ci];
+    html += cardHTML(p,
       '<button class="act-primary" onclick="event.stopPropagation();addToWishlist(\'' + esc(p.name) + '\',\'' + esc(p.rid) + '\')"><i class="fa-regular fa-star"></i> Shortlist</button>' +
       '<button class="act-primary" onclick="event.stopPropagation();sendInterest(\'' + esc(p.rid) + '\')"><i class="fa-regular fa-paper-plane"></i> Send Interest</button>');
-  }).join('');
+    // Insert ad after every adInterval cards, or after last card if few profiles
+    if (ads.length && adIdx < ads.length) {
+      var shouldShowAd = adInterval ? ((ci + 1 + _renderedCount) % adInterval === 0) : false;
+      if (shouldShowAd || ci === newCards.length - 1) {
+        html += adCardHTML(ads[adIdx]);
+        adIdx++;
+      }
+    }
+  }
+  // If no profiles but ads exist, show ads anyway
+  if (!newCards.length && ads.length) {
+    for (var ai = 0; ai < ads.length; ai++) html += adCardHTML(ads[ai]);
+  }
   c.insertAdjacentHTML('beforeend', html);
   _renderedCount = allVisible.length;
 
@@ -463,6 +626,7 @@ function renderUserProfile() {
       (function() { var pct = getProfileCompleteness(u); return pct < 100 ? '<div style="margin:12px auto;max-width:280px"><div style="display:flex;justify-content:space-between;font-size:.75rem;color:rgba(255,255,255,.6);margin-bottom:4px"><span>Profile completeness</span><span>' + pct + '%</span></div><div style="height:4px;background:rgba(255,255,255,.08);border-radius:4px;overflow:hidden"><div style="height:100%;width:' + pct + '%;background:linear-gradient(90deg,var(--pink-deep),var(--gold));border-radius:4px;transition:width .5s"></div></div></div>' : ''; })() +
       '<div class="profile-actions">' +
         '<button class="profile-edit-btn" onclick="loadUserProfileForEdit()"><i class="fa-solid fa-pen-to-square"></i> Edit Profile</button>' +
+        '<button class="profile-edit-btn" onclick="showChangePasswordModal()" style="background:rgba(196,162,101,.1);border-color:rgba(196,162,101,.2);color:var(--gold)"><i class="fa-solid fa-key"></i> Reset Password</button>' +
         '<button class="profile-logout-btn" onclick="confirmDeleteAccount()"><i class="fa-solid fa-trash"></i> Delete Account</button>' +
       '</div>' +
     '</div>' +
@@ -480,13 +644,17 @@ function renderUserProfile() {
       '<div class="detail-row"><div class="detail-icon purple"><i class="fa-solid fa-users"></i></div><div class="detail-text"><span class="detail-label">Caste</span><span class="detail-value">' + esc(u.caste) + '</span></div></div>' +
       (u.subcaste ? '<div class="detail-row"><div class="detail-icon purple"><i class="fa-solid fa-user-group"></i></div><div class="detail-text"><span class="detail-label">Sub-caste</span><span class="detail-value">' + esc(u.subcaste) + '</span></div></div>' : '') +
       (u.rashi ? '<div class="detail-row"><div class="detail-icon gold"><i class="fa-solid fa-star"></i></div><div class="detail-text"><span class="detail-label">Rashi / Nakshatra</span><span class="detail-value">' + esc(u.rashi) + (u.nakshatra ? ' / ' + esc(u.nakshatra) : '') + '</span></div></div>' : '') +
-      (u.timeOfBirth ? '<div class="detail-row"><div class="detail-icon pink"><i class="fa-solid fa-clock"></i></div><div class="detail-text"><span class="detail-label">Birth Time / Place</span><span class="detail-value">' + esc(u.timeOfBirth) + (u.placeOfBirth ? ', ' + esc(u.placeOfBirth) : '') + '</span></div></div>' : '') +
+      (u.timeOfBirth ? '<div class="detail-row"><div class="detail-icon pink"><i class="fa-solid fa-clock"></i></div><div class="detail-text"><span class="detail-label">Birth Time / Place</span><span class="detail-value">' + esc(fmtTime(u.timeOfBirth)) + (u.placeOfBirth ? ', ' + esc(u.placeOfBirth) : '') + '</span></div></div>' : '') +
       (u.preferences ? '<div class="detail-row"><div class="detail-icon gold"><i class="fa-solid fa-clipboard-list"></i></div><div class="detail-text"><span class="detail-label">Partner Preferences</span><span class="detail-value">' + esc(u.preferences) + '</span></div></div>' : '') +
       (u.linkedin || u.instagram ? '<div class="detail-row"><div class="detail-icon purple"><i class="fa-solid fa-link"></i></div><div class="detail-text"><span class="detail-label">Social</span><span class="detail-value">' + (u.linkedin ? '<a href="' + esc(u.linkedin) + '" target="_blank" style="color:var(--pink);text-decoration:none">LinkedIn</a> ' : '') + (u.instagram ? '<a href="https://instagram.com/' + esc(u.instagram.replace('@','')) + '" target="_blank" style="color:var(--pink);text-decoration:none">Instagram</a>' : '') + '</span></div></div>' : '') +
       '<div class="detail-row"><div class="detail-icon pink"><i class="fa-solid fa-phone"></i></div><div class="detail-text"><span class="detail-label">Phone</span><span class="detail-value">' + esc(u.phone) + '</span></div></div>' +
     '</div>' +
     '<div style="text-align:center;margin-top:24px">' +
       '<button onclick="showSupportPopup()" style="padding:10px 24px;border:1px solid rgba(255,255,255,.1);border-radius:980px;background:transparent;color:rgba(255,255,255,.6);font-size:.82rem;font-weight:600;cursor:pointer;transition:all .2s"><i class="fa-solid fa-headset"></i> Need Help? Contact Support</button>' +
+    '</div>' +
+    '<div style="text-align:center;margin-top:12px;display:flex;justify-content:center;gap:10px">' +
+      '<a href="#" onclick="showTermsModal();return false" style="font-size:.78rem;color:rgba(255,255,255,.5);text-decoration:none;padding:8px 18px;border:1px solid rgba(255,255,255,.08);border-radius:980px;transition:all .2s">Terms of Service</a>' +
+      '<a href="#" onclick="showPrivacyModal();return false" style="font-size:.78rem;color:rgba(255,255,255,.5);text-decoration:none;padding:8px 18px;border:1px solid rgba(255,255,255,.08);border-radius:980px;transition:all .2s">Privacy Policy</a>' +
     '</div>' +
     '<div style="text-align:center;margin-top:16px;padding:20px;background:rgba(196,162,101,.06);border:1px solid rgba(196,162,101,.1);border-radius:16px">' +
       '<p style="font-size:.85rem;color:rgba(255,255,255,.6);margin-bottom:10px"><i class="fa-solid fa-heart" style="color:var(--pink)"></i> Enjoying rishtas.in? Help us keep it free.</p>' +
@@ -503,7 +671,13 @@ function renderUserProfile() {
   document.getElementById("editMotherTongue").value = u.motherTongue || '';
   document.getElementById("editSmoking").value = u.smoking || 'No';
   document.getElementById("editDrinking").value = u.drinking || 'No';
-  document.getElementById("editTimeOfBirth").value = u.timeOfBirth || '';
+  // Parse timeOfBirth - Sheets may return Date object string
+  var tob = u.timeOfBirth || '';
+  if (tob && typeof tob === 'string' && tob.indexOf(':') === -1) {
+    // Try to parse as date string and extract HH:MM
+    try { var d = new Date(tob); if (!isNaN(d)) tob = ('0'+d.getHours()).slice(-2)+':'+('0'+d.getMinutes()).slice(-2); } catch(e) { tob = ''; }
+  }
+  document.getElementById("editTimeOfBirth").value = tob;
   document.getElementById("editPlaceOfBirth").value = u.placeOfBirth || '';
   document.getElementById("editRashi").value = u.rashi || '';
   document.getElementById("editNakshatra").value = u.nakshatra || '';
@@ -516,7 +690,6 @@ function renderUserProfile() {
   document.getElementById("editPhone").value = u.phone;
   document.getElementById("editEmail").value = u.email; document.getElementById("editPhotos").src = uPhotos[0] || '';
   document.getElementById("editSubcaste").value = u.subcaste || '';
-  document.getElementById("editPassword").value = u.password;
 }
 
 // ===== ACTION CAPTCHA (every 2 interest/shortlist actions) =====
@@ -552,6 +725,30 @@ function checkActionCaptcha(actionFn) {
 function onActionCaptchaSuccess() {
   document.getElementById('actionCaptchaModal').classList.remove('active');
   if (_pendingAction) { _pendingAction(); _pendingAction = null; }
+}
+
+// ===== CHANGE PASSWORD (logged-in) =====
+function showChangePasswordModal() {
+  document.getElementById('cpOldPassword').value = '';
+  document.getElementById('cpNewPassword').value = '';
+  document.getElementById('cpConfirmPassword').value = '';
+  document.getElementById('cpStrength').innerHTML = '';
+  document.getElementById('changePasswordModal').classList.add('active');
+}
+function submitChangePassword() {
+  var old = document.getElementById('cpOldPassword').value;
+  var pw = document.getElementById('cpNewPassword').value;
+  var pw2 = document.getElementById('cpConfirmPassword').value;
+  if (!old) { showAlert('Enter your current password.'); return; }
+  if (!pw) { showAlert('Enter a new password.'); return; }
+  if (pw.length < 6) { showAlert('New password must be at least 6 characters.'); return; }
+  if (pw !== pw2) { showAlert('Passwords do not match.'); return; }
+  showLoader2('Updating password...');
+  api.changePassword(old, pw).then(function(r) {
+    hideLoader2();
+    showAlert(r.message);
+    if (r.success) document.getElementById('changePasswordModal').classList.remove('active');
+  }).catch(function(err) { hideLoader2(); showAlert(err.message); });
 }
 
 // ===== DELETE ACCOUNT =====
@@ -601,12 +798,15 @@ function removeFromWishlist(n, rid) {
 function loadInterest() { if (interestlistload) { showActionBar('Loading interests...'); smartLoad('interests', function() { return api.getUserInterests(getSessionRid()); }, displayInterests); interestlistload = false; } showView('interest'); document.getElementById('statusFilter').value = 'all'; filterByStatus(); }
 function displayInterests(profiles) {
   var c = document.getElementById("interest-container");
-  if (!profiles.length) { c.innerHTML = '<div class="empty-state"><i class="fa-regular fa-envelope"></i><p>No interests yet.</p></div>'; }
-  else { c.innerHTML = profiles.map(function(p) { var sc = getStatusClass(p.status), sh = '<div class="status-badge ' + sc + '">' + esc(p.status) + '</div>', b = ''; if (p.status === 'Received') b = '<button class="act-success" onclick="event.stopPropagation();acceptInterest(\'' + esc(p.rid) + '\')"><i class="fa-solid fa-check"></i> Accept</button><button class="act-danger" onclick="event.stopPropagation();cancelInterest(\'' + esc(p.rid) + '\')"><i class="fa-solid fa-xmark"></i> Decline</button>'; else if (p.status === 'Accepted') b = '<button onclick="event.stopPropagation()"><i class="fas fa-phone"></i> ' + esc(p.phone) + '</button><button class="act-danger" onclick="event.stopPropagation();cancelInterest(\'' + esc(p.rid) + '\')"><i class="fa-solid fa-xmark"></i> Decline</button>'; else if (p.status === 'Declined') b = '<button class="act-success" onclick="event.stopPropagation();acceptInterest(\'' + esc(p.rid) + '\')"><i class="fa-solid fa-check"></i> Accept</button>'; else b = '<button class="act-danger" onclick="event.stopPropagation();deleteInterest(\'' + esc(p.rid) + '\')"><i class="fa-solid fa-trash"></i> Delete</button>'; return cardHTML(p, b, sh); }).join(''); }
+  var blocked = getBlockedUsers();
+  var filtered = profiles.filter(function(p) { return blocked.indexOf(p.rid) === -1; });
+  if (!filtered.length) { c.innerHTML = '<div class="empty-state"><i class="fa-regular fa-envelope"></i><p>No interests yet.</p></div>'; }
+  else { c.innerHTML = filtered.map(function(p) { var sc = getStatusClass(p.status), sh = '<div class="status-badge ' + sc + '">' + esc(p.status) + '</div>', b = ''; if (p.status === 'Received') b = '<button class="act-success" onclick="event.stopPropagation();acceptInterest(\'' + esc(p.rid) + '\')"><i class="fa-solid fa-check"></i> Accept</button><button class="act-danger" onclick="event.stopPropagation();cancelInterest(\'' + esc(p.rid) + '\')"><i class="fa-solid fa-xmark"></i> Decline</button>'; else if (p.status === 'Accepted') b = '<button onclick="event.stopPropagation()"><i class="fas fa-phone"></i> ' + esc(p.phone) + '</button><button class="act-danger" onclick="event.stopPropagation();cancelInterest(\'' + esc(p.rid) + '\')"><i class="fa-solid fa-xmark"></i> Decline</button>'; else if (p.status === 'Declined') b = '<button class="act-success" onclick="event.stopPropagation();acceptInterest(\'' + esc(p.rid) + '\')"><i class="fa-solid fa-check"></i> Accept</button>'; else b = '<button class="act-danger" onclick="event.stopPropagation();deleteInterest(\'' + esc(p.rid) + '\')"><i class="fa-solid fa-trash"></i> Delete</button>'; return cardHTML(p, b, sh); }).join(''); }
   hideLoader(); hideActionBar(); initObservers(); updateBadges();
 }
 function sendInterest(rid) {
   if (isRateLimited('sendInterest', 3000)) return;
+  if (getBlockedUsers().indexOf(rid) !== -1) { showAlert('This user is blocked.'); return; }
   if (hasAlreadySentInterest(rid)) { showAlert('You have already sent interest to this person.'); return; }
   checkActionCaptcha(function() {
     showActionBar('Sending interest...');
@@ -691,24 +891,28 @@ function applyFilters() {
 // ===== PASSWORD RESET =====
 function showForgotPassword() {
   document.getElementById('landing-section').classList.add('hidden');
+  document.getElementById('app-section').classList.add('hidden');
   document.getElementById('reset-section').classList.remove('hidden');
   document.getElementById('reset-step1').classList.remove('hidden');
   document.getElementById('reset-step2').classList.add('hidden');
+  // Pre-fill email if logged in
+  var em = localStorage.getItem('rishtas_sessionEmail');
+  if (em) document.getElementById('resetEmail').value = em;
 }
 function requestOTP() {
   var email = document.getElementById('resetEmail').value.trim();
   if (!email) { showAlert('Please enter your email.'); return; }
-  var cap = getCaptchaResponse('regCaptcha');
+  var cap = getCaptchaResponse('resetCaptcha1');
   if (!cap) { showAlert('Please complete the CAPTCHA.'); return; }
-  showActionBar('Sending OTP...');
+  showLoader2('Sending OTP...');
   api.requestPasswordReset(email, cap).then(function(r) {
-    hideActionBar();
+    hideLoader2();
     if (r.success) {
       showAlert(r.message);
       document.getElementById('reset-step1').classList.add('hidden');
       document.getElementById('reset-step2').classList.remove('hidden');
-    } else { showAlert(r.message); }
-  }).catch(function(err) { hideActionBar(); showAlert(err.message); });
+    } else { showAlert(r.message); resetCaptcha('resetCaptcha1'); }
+  }).catch(function(err) { hideLoader2(); showAlert(err.message); resetCaptcha('resetCaptcha1'); });
 }
 function resetPassword() {
   var email = document.getElementById('resetEmail').value.trim();
@@ -718,21 +922,28 @@ function resetPassword() {
   if (!otp) { showAlert('Please enter the OTP.'); return; }
   if (!pw) { showAlert('Please enter a new password.'); return; }
   if (pw !== pw2) { showAlert('Passwords do not match.'); return; }
-  var cap = getCaptchaResponse('regCaptcha');
+  var cap = getCaptchaResponse('resetCaptcha2');
   if (!cap) { showAlert('Please complete the CAPTCHA.'); return; }
-  showActionBar('Resetting password...');
+  showLoader2('Resetting password...');
   api.verifyOTPAndReset(email, otp, pw, cap).then(function(r) {
-    hideActionBar();
+    hideLoader2();
     showAlert(r.message);
     if (r.success) {
       document.getElementById('reset-section').classList.add('hidden');
-      showLoginForm();
-    }
-  }).catch(function(err) { hideActionBar(); showAlert(err.message); });
+      showLanding();
+    } else { resetCaptcha('resetCaptcha2'); }
+  }).catch(function(err) { hideLoader2(); showAlert(err.message); resetCaptcha('resetCaptcha2'); });
 }
 function backToLogin() {
   document.getElementById('reset-section').classList.add('hidden');
-  showLanding();
+  // If user is logged in, go back to app/profile, otherwise landing
+  var token = localStorage.getItem('rishtas_authToken');
+  if (token && localStorage.getItem('rishtas_sessionEmail')) {
+    document.getElementById('app-section').classList.remove('hidden');
+    showView('profile');
+  } else {
+    showLanding();
+  }
 }
 
 // ===== LOGIN / LOGOUT =====
@@ -750,13 +961,17 @@ function login() {
       localStorage.setItem('rishtas_sessionExpiry', String(Date.now() + SESSION_DAYS * 24 * 60 * 60 * 1000));
       localStorage.setItem('rishtas_sessionEmail', e);
       localStorage.setItem('rishtas_sessionRid', r.rid);
+      localStorage.setItem('rishtas_encKey', String(djb2(p)));
       var gen = r.gen === "Male" ? "63889cfb" : "b719ce18";
       localStorage.setItem('rishtas_sessionGender', gen);
       sessionStorage.setItem('authToken', r.token);
+      sessionStorage.setItem('sessionToken', djb2(p));
       sessionStorage.setItem('sessionEmail', e);
       sessionStorage.setItem('sessionRid', r.rid);
       sessionStorage.setItem('sessionG', gen);
       currentEmail = e; currentGender = gen;
+      // Store blocked users from login response (no extra API call)
+      if (r.blocked) localStorage.setItem(LS_PREFIX + 'blocked', JSON.stringify(r.blocked));
       showApp(); showView('search');
       showLoader('Discovering profiles...');
       showInactiveNotice();
@@ -781,7 +996,7 @@ function registerUser() {
   showLoader2('Creating your profile...');
   var f = { name:document.getElementById("fname").value, age:document.getElementById("age").value, gender:(document.querySelector('input[name="gender"]:checked')||{}).value, height:document.getElementById("height").value, education:document.getElementById("education").value, occupation:document.getElementById("occupation").value, income:document.getElementById("income").value, maritalStatus:document.getElementById("maritalStatus").value, about:document.getElementById("about").value, location:document.getElementById("location").value, interests:document.getElementById("interests").value, caste:document.getElementById("caste").value, subcaste:document.getElementById("subcaste").value, religion:document.getElementById("religion").value, phone:document.getElementById("phone").value, email:document.getElementById("emailR").value, password:document.getElementById("passwordR").value.trim(), confirmPassword:document.getElementById("confirmPassword").value.trim(), timeOfBirth:document.getElementById("timeOfBirth").value, placeOfBirth:document.getElementById("placeOfBirth").value, rashi:document.getElementById("rashi").value, nakshatra:document.getElementById("nakshatra").value, motherTongue:document.getElementById("motherTongue").value, preferences:document.getElementById("preferences").value, smoking:document.getElementById("smoking").value, drinking:document.getElementById("drinking").value, linkedin:document.getElementById("linkedin").value, instagram:document.getElementById("instagram").value };
   var ph = document.getElementById("photos").files[0], ph2 = document.getElementById("photos2").files[0], cap = getCaptchaResponse('regCaptcha');
-  var chk = [[!cap,'Complete the CAPTCHA'],[!f.name,'Enter name.'],[!f.age,'Enter age.'],[!f.gender,'Select gender.'],[!f.location,'Enter location.'],[!f.interests,'Enter interests.'],[!f.caste,'Enter caste.'],[!f.phone,'Enter phone.'],[!f.email,'Enter email.'],[!f.password,'Enter password.'],[!f.confirmPassword,'Confirm password.'],[!ph,'Select at least one photo.'],[f.password!==f.confirmPassword,'Passwords do not match.'],[f.about&&f.about.length>50,'About Me must be 50 characters or less.'],[f.preferences&&f.preferences.length>50,'Preferences must be 50 characters or less.']];
+  var chk = [[!cap,'Complete the CAPTCHA'],[!document.getElementById('agreeTerms').checked,'Please agree to the Terms of Service and Privacy Policy.'],[!f.name,'Enter name.'],[!f.age,'Enter age.'],[!f.gender,'Select gender.'],[!f.location,'Enter location.'],[!f.interests,'Enter interests.'],[!f.caste,'Enter caste.'],[!f.phone,'Enter phone.'],[!f.email,'Enter email.'],[!f.password,'Enter password.'],[!f.confirmPassword,'Confirm password.'],[!ph,'Select at least one photo.'],[f.password!==f.confirmPassword,'Passwords do not match.'],[f.about&&f.about.length>50,'About Me must be 50 characters or less.'],[f.preferences&&f.preferences.length>50,'Preferences must be 50 characters or less.']];
   for (var i = 0; i < chk.length; i++) { if (chk[i][0]) { hideLoader2(); showAlert(chk[i][1]); return; } }
 
   compressImage(ph, 800, 0.75, function(b64) {
@@ -812,9 +1027,9 @@ function closeEditProfileModal() { document.getElementById("editProfileModal").c
 
 function saveUserProfile() {
   showLoader('Updating profile...');
-  var f = { email:document.getElementById("editEmail").value, name:document.getElementById("editName").value, age:document.getElementById("editAge").value, gender:(document.querySelector('input[name="editGender"]:checked')||{}).value, height:document.getElementById("editHeight").value, education:document.getElementById("editEducation").value, occupation:document.getElementById("editOccupation").value, income:document.getElementById("editIncome").value, maritalStatus:document.getElementById("editMaritalStatus").value, about:document.getElementById("editAbout").value, location:document.getElementById("editLocation").value, interests:document.getElementById("editInterests").value, caste:document.getElementById("editCaste").value, subcaste:document.getElementById("editSubcaste").value, religion:document.getElementById("editReligion").value, phone:document.getElementById("editPhone").value, password:document.getElementById("editPassword").value.trim(), timeOfBirth:document.getElementById("editTimeOfBirth").value, placeOfBirth:document.getElementById("editPlaceOfBirth").value, rashi:document.getElementById("editRashi").value, nakshatra:document.getElementById("editNakshatra").value, motherTongue:document.getElementById("editMotherTongue").value, preferences:document.getElementById("editPreferences").value, smoking:document.getElementById("editSmoking").value, drinking:document.getElementById("editDrinking").value, linkedin:document.getElementById("editLinkedin").value, instagram:document.getElementById("editInstagram").value };
+  var f = { email:document.getElementById("editEmail").value, name:document.getElementById("editName").value, age:document.getElementById("editAge").value, gender:(document.querySelector('input[name="editGender"]:checked')||{}).value, height:document.getElementById("editHeight").value, education:document.getElementById("editEducation").value, occupation:document.getElementById("editOccupation").value, income:document.getElementById("editIncome").value, maritalStatus:document.getElementById("editMaritalStatus").value, about:document.getElementById("editAbout").value, location:document.getElementById("editLocation").value, interests:document.getElementById("editInterests").value, caste:document.getElementById("editCaste").value, subcaste:document.getElementById("editSubcaste").value, religion:document.getElementById("editReligion").value, phone:document.getElementById("editPhone").value, password:_userProfile ? _userProfile.password : '', timeOfBirth:document.getElementById("editTimeOfBirth").value, placeOfBirth:document.getElementById("editPlaceOfBirth").value, rashi:document.getElementById("editRashi").value, nakshatra:document.getElementById("editNakshatra").value, motherTongue:document.getElementById("editMotherTongue").value, preferences:document.getElementById("editPreferences").value, smoking:document.getElementById("editSmoking").value, drinking:document.getElementById("editDrinking").value, linkedin:document.getElementById("editLinkedin").value, instagram:document.getElementById("editInstagram").value };
   var ph = null, ph2 = null; try { ph = document.getElementById("newphotos").files[0]; } catch(e) {} try { ph2 = document.getElementById("newphotos2").files[0]; } catch(e) {}
-  var chk = [[!f.age,'Enter age.'],[!f.gender,'Select gender.'],[!f.location,'Enter location.'],[!f.name,'Enter name.'],[!f.interests,'Enter interests.'],[!f.caste,'Enter caste.'],[!f.phone,'Enter phone.'],[!f.email,'Enter email.'],[!f.password,'Enter password.'],[f.about&&f.about.length>50,'About Me must be 50 characters or less.'],[f.preferences&&f.preferences.length>50,'Preferences must be 50 characters or less.']];
+  var chk = [[!f.age,'Enter age.'],[!f.gender,'Select gender.'],[!f.location,'Enter location.'],[!f.name,'Enter name.'],[!f.interests,'Enter interests.'],[!f.caste,'Enter caste.'],[!f.phone,'Enter phone.'],[!f.email,'Enter email.'],[f.about&&f.about.length>50,'About Me must be 50 characters or less.'],[f.preferences&&f.preferences.length>50,'Preferences must be 50 characters or less.']];
   for (var i = 0; i < chk.length; i++) { if (chk[i][0]) { hideLoader(); showAlert(chk[i][1]); return; } }
   var editCap = getCaptchaResponse('editCaptcha');
   if (!editCap) { hideLoader(); showAlert('Please complete the CAPTCHA.'); return; }
@@ -822,9 +1037,14 @@ function saveUserProfile() {
   function doUp(link) {
     var up = Object.assign({}, f, { photos: link });
     api.updateUserProfile(up, editCap).then(function() {
-      _profileRenderedFor = null; // Force re-render with new data
+      // Update local profile immediately so view reflects changes
+      _userProfile = Object.assign({}, _userProfile, up);
+      lsSet('userProfile', _userProfile);
+      _profileRenderedFor = null;
       closeEditProfileModal(); showAlert("Profile updated!"); hideLoader();
-      lsSetTs('allProfiles', 0); initProfiles(currentEmail, currentGender); showView('profile');
+      showView('profile');
+      // Refresh from server in background
+      lsSetTs('allProfiles', 0); initProfiles(currentEmail, currentGender);
     }).catch(function() { hideLoader(); showAlert("Error updating."); });
   }
   function uploadBoth(link1) {
@@ -840,6 +1060,11 @@ function saveUserProfile() {
 window.onload = function() {
   showLoader('Welcome...');
   initObservers();
+
+  // Check for shared profile URL: #profile/RID
+  var hash = window.location.hash || '';
+  var profileMatch = hash.match(/^#profile\/(.+)$/);
+
   // Check localStorage for valid session (no backend call)
   var token = localStorage.getItem('rishtas_authToken');
   var expiry = Number(localStorage.getItem('rishtas_sessionExpiry')) || 0;
@@ -852,10 +1077,14 @@ window.onload = function() {
     sessionStorage.setItem('sessionEmail', em);
     sessionStorage.setItem('sessionRid', rid);
     sessionStorage.setItem('sessionG', gen);
+    var encKey = localStorage.getItem('rishtas_encKey');
+    if (encKey) sessionStorage.setItem('sessionToken', encKey);
     currentEmail = em; currentGender = gen;
     showApp(); showView('search');
     showInactiveNotice();
     initProfiles(em, gen);
+    // If shared profile link, open it after profiles load
+    if (profileMatch) { setTimeout(function() { openProfileDetail(profileMatch[1]); }, 1500); }
   } else {
     // Expired or no session, clear everything
     localStorage.removeItem('rishtas_authToken');
@@ -863,8 +1092,16 @@ window.onload = function() {
     localStorage.removeItem('rishtas_sessionEmail');
     localStorage.removeItem('rishtas_sessionRid');
     localStorage.removeItem('rishtas_sessionGender');
+    localStorage.removeItem('rishtas_encKey');
     sessionStorage.clear();
-    hideLoader(); showLanding();
+    hideLoader();
+    // If shared profile link, show public limited view
+    if (profileMatch) {
+      showLanding();
+      openPublicProfile(profileMatch[1]);
+    } else {
+      showLanding();
+    }
   }
 };
 
@@ -961,10 +1198,10 @@ document.getElementById('photoViewer').addEventListener('click', function(e) { i
 
 // ===== IMAGE ERROR HANDLER (429 / broken images) =====
 function handleImgError(img) {
-  // Replace broken image with avatar placeholder
+  if (!img || !img.parentNode) return;
   var fallback = document.createElement('div');
   fallback.className = 'img-fallback';
-  fallback.innerHTML = '<i class="fa-solid fa-user"></i><span>Photo unavailable</span>';
+  fallback.innerHTML = '<i class="fa-solid fa-camera-rotate"></i><span>Photo loading slow, try again shortly</span>';
   fallback.style.height = img.style.height || img.offsetHeight + 'px' || '340px';
   img.parentNode.replaceChild(fallback, img);
 }
@@ -977,14 +1214,22 @@ document.addEventListener('error', function(e) {
 
 // ===== #2 BLOCK/REPORT USER =====
 function getBlockedUsers() { try { return JSON.parse(localStorage.getItem(LS_PREFIX + 'blocked') || '[]'); } catch(e) { return []; } }
+function syncBlockedUsersFromServer() {
+  api.getBlockedUsers().then(function(list) {
+    localStorage.setItem(LS_PREFIX + 'blocked', JSON.stringify(list || []));
+  }).catch(function() {});
+}
 
 var _menuRid = '', _menuName = '';
 function blockUser(rid, name) {
+  // Update client immediately
   var blocked = getBlockedUsers();
   if (blocked.indexOf(rid) === -1) blocked.push(rid);
   localStorage.setItem(LS_PREFIX + 'blocked', JSON.stringify(blocked));
   showAlert(name + ' has been blocked.');
   if (_allProfiles) { _renderedCount = 0; renderProfilePage(); }
+  // Sync to server in background
+  api.blockUser(rid).catch(function() {});
 }
 function reportUser(rid, name, reason) {
   var email = sessionStorage.getItem('sessionEmail') || 'anonymous';
@@ -1113,16 +1358,6 @@ function showPasswordStrength(pw, targetId) {
   var s = getPasswordStrength(pw);
   if (!pw) { el.innerHTML = ''; return; }
   el.innerHTML = '<div style="display:flex;align-items:center;gap:8px;margin-top:6px"><div style="flex:1;height:3px;background:rgba(255,255,255,.06);border-radius:3px;overflow:hidden"><div style="width:' + (s.score * 20) + '%;height:100%;background:' + s.color + ';border-radius:3px;transition:width .3s"></div></div><span style="font-size:.7rem;color:' + s.color + ';font-weight:600">' + s.label + '</span></div>';
-}
-
-// ===== #6 SHARE PROFILE (minimal, requires login to see full) =====
-function shareProfile(rid, name) {
-  var url = window.location.origin + window.location.pathname + '?view=' + rid;
-  if (navigator.clipboard) {
-    navigator.clipboard.writeText(url).then(function() { showAlert('Profile link copied! Share it with others.'); });
-  } else {
-    prompt('Copy this link to share ' + name + "'s profile:", url);
-  }
 }
 
 // ===== RECAPTCHA EXPLICIT RENDERING =====

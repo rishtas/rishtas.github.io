@@ -15,6 +15,7 @@ function handleAuthError(data) {
     localStorage.removeItem('rishtas_sessionEmail');
     localStorage.removeItem('rishtas_sessionRid');
     localStorage.removeItem('rishtas_sessionGender');
+    localStorage.removeItem('rishtas_encKey');
     sessionStorage.clear();
     try { var keys = []; for (var i = 0; i < localStorage.length; i++) { var k = localStorage.key(i); if (k && k.indexOf('rishtas_') === 0) keys.push(k); } keys.forEach(function(k) { localStorage.removeItem(k); }); } catch(e) {}
     showAlert('Session expired. Please login again.');
@@ -121,6 +122,18 @@ var api = {
   },
   deleteAccount: function() {
     return api.post('deleteAccount');
+  },
+  changePassword: function(oldPassword, newPassword) {
+    return api.post('changePassword', { oldPassword: oldPassword, newPassword: newPassword });
+  },
+  blockUser: function(blockedRid) {
+    return api.post('blockUser', { blockedRid: blockedRid });
+  },
+  unblockUser: function(blockedRid) {
+    return api.post('unblockUser', { blockedRid: blockedRid });
+  },
+  getBlockedUsers: function() {
+    return api.post('getBlockedUsers');
   },
   logout: function() {
     return api.post('logout');

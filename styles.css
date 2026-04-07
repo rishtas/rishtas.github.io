@@ -116,6 +116,18 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;bac
 .card-overlay h2{font-family:'Cormorant Garamond',serif;font-size:1.25rem;font-weight:700;text-shadow:0 1px 6px rgba(0,0,0,.6)}
 .card-overlay .loc{font-size:.78rem;opacity:.85;margin-top:3px;text-shadow:0 1px 4px rgba(0,0,0,.5)}
 .card-more{font-size:.76rem;color:rgba(255,255,255,0.7);display:flex;align-items:center;gap:5px;padding:10px 20px}
+.card-brief{display:flex;flex-wrap:wrap;gap:6px;padding:10px 16px 4px}
+.brief-tag{font-size:.72rem;color:rgba(255,255,255,.65);background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.06);border-radius:980px;padding:4px 10px;display:inline-flex;align-items:center;gap:4px}
+.brief-tag i{font-size:.6rem;color:var(--pink);opacity:.7}
+.view-profile-btn{width:calc(100% - 32px);margin:6px 16px 2px;padding:10px;border:1px solid rgba(255,255,255,.08);border-radius:12px;background:rgba(255,255,255,.03);color:rgba(255,255,255,.6);font-size:.78rem;font-weight:600;cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:6px}
+.view-profile-btn:hover{background:rgba(184,69,106,.08);border-color:rgba(184,69,106,.15);color:rgba(255,255,255,.8)}
+.ad-card{border:1px solid rgba(196,162,101,.2);background:linear-gradient(135deg,rgba(196,162,101,.06),rgba(184,69,106,.04));position:relative;border-radius:var(--radius);overflow:hidden;contain:layout style}
+.ad-badge{position:absolute;top:12px;left:12px;z-index:2;padding:5px 14px;border-radius:980px;background:rgba(196,162,101,.9);color:#1a1025;font-size:.68rem;font-weight:700;letter-spacing:.5px;display:flex;align-items:center;gap:5px;box-shadow:0 2px 8px rgba(0,0,0,.2)}
+.ad-card .card-img-wrap{position:relative}
+.ad-card .card-gallery img{height:220px}
+.ad-card::after{content:'';position:absolute;bottom:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--gold),var(--pink-deep),var(--gold))}
+.ad-cta-btn{display:inline-block;padding:10px 24px;border:none;border-radius:980px;background:linear-gradient(135deg,var(--gold),var(--pink-deep));color:#fff;font-size:.82rem;font-weight:700;text-decoration:none;transition:all .3s}
+.ad-cta-btn:hover{box-shadow:0 4px 16px rgba(196,162,101,.3);transform:translateY(-1px)}
 .card-details{padding:8px 18px 16px;display:none}
 .card-details.open{display:block}
 .detail-row{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid rgba(255,255,255,0.04)}
@@ -127,15 +139,16 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;bac
 .detail-label{font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:rgba(255,255,255,0.7)}
 .detail-value{font-size:.88rem;font-weight:600;color:rgba(255,255,255,0.85)}
 .detail-text{display:flex;flex-direction:column;gap:2px}
-.card-actions{display:flex;gap:10px;padding:14px 16px;border-top:1px solid rgba(255,255,255,0.06)}
-.card-actions button{flex:1;padding:12px 10px;border:none;font-size:.82rem;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:7px;transition:all .25s;border-radius:980px;position:relative;overflow:hidden}
-.card-actions button::before{content:'';position:absolute;top:0;left:-100%;width:100%;height:100%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.15),transparent);transition:left .5s}
-.card-actions button:hover::before{left:100%}
-.card-actions button.act-primary{background:linear-gradient(135deg,#b8456a,#d4728c,#c4a265);color:#fff}
+.card-actions{display:flex;gap:8px;padding:10px 16px;border-top:1px solid rgba(255,255,255,0.06);align-items:center}
+.card-actions button.act-primary{flex:1;padding:10px 8px;border:none;font-size:.78rem;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;transition:all .25s;border-radius:980px;position:relative;overflow:hidden;background:linear-gradient(135deg,#b8456a,#d4728c,#c4a265);color:#fff}
+.card-actions button.act-primary::before{content:'';position:absolute;top:0;left:-100%;width:100%;height:100%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.15),transparent);transition:left .5s}
+.card-actions button.act-primary:hover::before{left:100%}
 .card-actions button.act-primary:hover{box-shadow:0 6px 20px rgba(184,69,106,.3)}
-.card-actions button.act-danger{background:rgba(255,100,100,.15);color:#ff8a8a;border:1px solid rgba(255,100,100,.15)}
+.card-actions .card-icon-btn{flex:0 0 auto;width:32px;height:32px;padding:0;border:1px solid rgba(255,255,255,.08);border-radius:50%;background:rgba(255,255,255,.04);color:rgba(255,255,255,.4);font-size:.78rem;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s}
+.card-actions .card-icon-btn:hover{background:rgba(255,255,255,.08);color:rgba(255,255,255,.7)}
+.card-actions button.act-danger{flex:1;padding:10px 8px;border:1px solid rgba(255,100,100,.15);font-size:.78rem;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;border-radius:980px;background:rgba(255,100,100,.15);color:#ff8a8a}
 .card-actions button.act-danger:hover{background:rgba(255,100,100,.25)}
-.card-actions button.act-success{background:rgba(110,231,183,.12);color:#6ee7b7;border:1px solid rgba(110,231,183,.12)}
+.card-actions button.act-success{flex:1;padding:10px 8px;border:1px solid rgba(110,231,183,.12);font-size:.78rem;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;border-radius:980px;background:rgba(110,231,183,.12);color:#6ee7b7}
 .card-actions button.act-success:hover{background:rgba(110,231,183,.22)}
 
 /* ===== STATUS BADGE ===== */
@@ -259,6 +272,8 @@ footer{padding:32px 24px;text-align:center;border-top:1px solid rgba(255,255,255
 footer .logo{justify-content:center;margin-bottom:8px;font-size:1.1rem}
 
 /* ===== RESPONSIVE ===== */
+.g-recaptcha{transform-origin:left top;max-width:100%;overflow:hidden}
+@media(max-width:360px){.g-recaptcha{transform:scale(0.85)}}
 @media(max-width:900px){
   .navbar{padding:0 16px}
   .nav-links-desktop{display:none}
@@ -273,8 +288,8 @@ footer .logo{justify-content:center;margin-bottom:8px;font-size:1.1rem}
   .hero-sub{text-align:center;margin-left:auto;margin-right:auto}
   .hero-left .hero-free{margin-bottom:12px}
   .hero-left #heroCTA{justify-content:center}
-  .hero-right{justify-content:center;width:100%;padding:0 16px;box-sizing:border-box}
-  .hero-right .login-card{max-width:100%}
+  .hero-right{justify-content:center;align-items:center;width:100%;box-sizing:border-box}
+  .hero-right .login-card{max-width:calc(100% - 32px);margin:0 auto;padding:28px 20px}
   .form-card{padding:24px 18px}
   .form-card form{grid-template-columns:1fr}
   .section-header{padding:90px 20px 16px}
