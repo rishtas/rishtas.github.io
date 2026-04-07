@@ -300,7 +300,7 @@ function smartLoad(dataKey, fetchFn, renderFn) {
 }
 
 // ===== PROFILE DATA MANAGER =====
-var GITHUB_PROFILES_URL = 'data/profiles.json';
+var GITHUB_PROFILES_URL = '/data/profiles.json';
 var PROFILE_ENCRYPT_KEY = 'r1sht4s_pr0f1l3s_2024_s3cur3';
 
 function decryptProfileData(encoded) {
